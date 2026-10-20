@@ -206,9 +206,10 @@ docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout)
   modules) were lost with the build VM — `docs/LEAN_STATUS.md` lists them and
   explains what can be reconstructed from the certificate archive. The final
   theorems currently stand on the external `lrat-check` verification.
-* **Certificate archive pending.** The ≈44 GB archive is staged for Zenodo
-  (upload in progress at release time); until the DOI resolves, the
-  certificates live in the campaign storage described in `docs/HANDOFF.md`.
+* **Certificate archive.** The ≈50 GB archive is published on Zenodo
+  ([10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386),
+  [10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200));
+  `docs/HANDOFF.md` describes the layout.
 * **Certificate provenance.** The released certificates were produced by a
   clean-room re-encoding of the campaign's cube partitions, validated against
   known small Ramsey values; SAT controls (e.g. `R(B₄,B₇)>16` satisfiable) are
