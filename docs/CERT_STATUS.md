@@ -65,9 +65,9 @@ per leaf with per-proof sha256). The 7 rejected payloads are all in
 propagating mid-proof (e.g. `FAILED: multiple literals unassigned in hint`).
 Each of those 7 **formulas** was re-solved fresh with CaDiCaL 3.0.1 and every
 one returned UNSAT again; the replacement proofs pass `lrat-check` and are
-published alongside the originals on the Zenodo record
-(`<leaf>.repaired.lrat.gz`). Effective state: all 902 formulas carry an
-externally verified UNSAT proof.
+published on companion record `10.5281/zenodo.23519512` as
+`<leaf>.repaired.lrat.gz` (the originals are kept for the record). Effective
+state: all 902 formulas carry an externally verified UNSAT proof.
 
 Earlier spot checks, for the record:
 
