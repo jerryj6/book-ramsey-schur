@@ -279,17 +279,22 @@ also regenerated from the written design by a second implementation,
 in Python, without reading the original generator. It was again
 unsatisfiable.
 
-\paragraph{Released artifacts.} The released certificates pass
-\texttt{lrat-check} from drat-trim: the $94$ finite cases
-(\texttt{sat/schur/LRAT\_MANIFEST.csv}) and all $23$ archived
-symbolic proofs (\texttt{sat/schur/SYMMETRIC\_MANIFEST.csv}), with
-SHA-256 hashes per CNF and proof. The theorem chain uses the
+\paragraph{Released artifacts.} The $94$ finite released certificates
+pass \texttt{lrat-check} from drat-trim
+(\texttt{sat/schur/LRAT\_MANIFEST.csv}). All $23$ archived symbolic
+payloads were audited the same way
+(\texttt{sat/schur/SYMMETRIC\_MANIFEST.csv}, SHA-256 hashes per CNF
+and proof): $16$ pass \texttt{lrat-check} — including all four
+proofs the theorem uses; $5$ are $0$-byte placeholders left by the
+parameter sweep on formulas independently shown satisfiable; and the
+two $(5,5)$ $J=1,2$ payloads end before the empty clause and are
+recorded as FAIL. The theorem chain uses the
 parameter rows of Table~\ref{tab:sym} — $(4,4)$ with $B=20,J=2$
 covering $u\ge21$, and $B=30$ with $J=1,2,3$ for $(4,5)$, $(4,6)$,
 $(5,5)$ covering $u\ge31$; the finite manifest reaches $u\le20$ for
 $(4,4)$ and $u\le30$ for the rest, so the chains meet with no gap.
-The remaining $19$ symbolic rows are alternative parameter settings
-of the same families, also verified. The Lean
+The remaining $12$ verified symbolic rows are alternative parameter
+settings of the same families. The Lean
 source tree in the release is a partial reconstruction of the original
 project: the modules it is missing, and the checker-verification that
 stands in for them, are itemised in \texttt{docs/LEAN\_STATUS.md}.

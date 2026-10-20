@@ -65,8 +65,10 @@ theorem conj_4_4 : ConjFamily 4 4
    as a SAT instance on the `C(N,2)` edge variables: book clauses forbid any
    edge having ≥ m (resp. ≥ n) same-colour common neighbours
    (`sat/gen_bookrow.c`).
-2. **Degree stratification.** In any B₄-free red graph the red-degree of every
-   vertex is bounded by a triangle-free graph on that many vertices. The search
+2. **Degree stratification.** In any B₄-free red graph, the red neighbourhood
+   of any vertex can contain no red B₃ (the vertex would complete it to a red
+   B₄) and no blue Bₙ, so its size is bounded by the corresponding smaller
+   Ramsey number. The search
    space is partitioned by per-vertex degree bounds (`Peeling.lean`), and each
    stratum is split into cubes (partial assignments) that are refuted
    independently.
@@ -88,9 +90,11 @@ theorem conj_4_4 : ConjFamily 4 4
 
 ### Lower bounds
 
-* `R(B₄,B₉) > 26`: the unique srg(26,10,3,4) used as the red graph — red-degrees
-  are 10, every red edge has exactly 3 red common neighbours, and every blue
-  edge exactly 8; checked by `native_decide` in `lean/b49/B49Witness.lean`.
+* `R(B₄,B₉) > 26`: a strongly regular srg(26,10,3,4) used as the red graph —
+  red-degrees are 10, every red edge has exactly 3 red common neighbours, and
+  every blue edge exactly 8; checked by `native_decide` in
+  `lean/b49/B49Witness.lean`. (Ten nonisomorphic srg(26,10,3,4) exist;
+  any one of them yields the bound.)
 * `R(B₄,B₇) > 21`: an explicit colouring of `K₂₁`, `LowerBound 21 4 7` in
   `lean/r47/R47Final.lean`.
 
