@@ -1,0 +1,312 @@
+\documentclass[11pt]{amsart}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[margin=1.05in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,keepspaces=true}
+
+\setlist{leftmargin=*,itemsep=2pt,topsep=3pt}
+\allowdisplaybreaks
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\col}{\mathrm{col}}
+\renewcommand{\UrlFont}{\ttfamily\small}
+\makeatletter\g@addto@macro{\UrlBreaks}{\do\-\do\_\do\,}\makeatother
+
+\title[Ahmed--Schaal families]{Four infinite families of the
+Ahmed--Schaal conjecture on generalized Schur numbers}
+\author{Jerry Yong (with computational assistance)}
+\date{October 2026}
+\thanks{Formal proof in Lean~4 with symbolic SAT certificates.}
+
+\begin{document}
+
+\begin{abstract}
+For $k\ge 3$ let $L(k)$ be the equation $x_1+\dots+x_{k-1}=x_k$. The
+generalized Schur number $S(3;s,t,u)$ is the least $N$ such that
+every $3$-colouring of $[1,N]$ has a solution of $L(s)$ in colour~1,
+of $L(t)$ in colour~2, or of $L(u)$ in colour~3, in each case with
+every variable in that colour. Ahmed and Schaal (2016) conjectured
+that $S(3;s,t,u)=stu-tu-u-1$ whenever $4\le s\le t\le u$. We prove
+the conjecture for $(s,t)\in\{(4,4),(4,5),(4,6),(5,5)\}$ and every
+$u\ge t$, which gives $S(3;4,4,u)=11u-1$, $S(3;4,5,u)=14u-1$,
+$S(3;4,6,u)=17u-1$ and $S(3;5,5,u)=19u-1$. The upper bound for all
+large $u$ comes from one propositional formula per pair, in which the
+variables are indexed by linear expressions $au+b$ rather than by
+integers. This extends the symbolic SAT method of Chang, De~Loera and
+Wesley. The finitely many small $u$ are handled directly. The whole
+theorem, including a general lower-bound construction, is checked in
+Lean~4 against a short statement file written from the definition.
+All $98$ SAT certificates are LRAT proofs checked inside Lean and,
+separately, by an independent checker.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+Schur's theorem says that $S(r)$ is finite: every $r$-colouring of
+$[1,S(r)]$ has a monochromatic solution of $x+y=z$. Many
+generalizations replace $x+y=z$ by the equation $L(k)$ and allow a
+different equation in each colour. A solution may repeat values. For
+three colours and parameters $3\le s\le t\le u$, Ahmed and Schaal
+\cite{AS16} proved the general lower bound $S(3;s,t,u)\ge stu-tu-u-1$
+and computed small values. They made two conjectures. Conjecture~1
+concerns $s=3$ and was settled in 2026 \cite{CDW26}. Conjecture~2 is
+the subject of this paper.
+
+\begin{conjecture}[Ahmed--Schaal \cite{AS16}]
+For $4\le s\le t\le u$, $S(3;s,t,u)=stu-tu-u-1$.
+\end{conjecture}
+
+Before this work the conjecture had been verified only for finitely
+many triples by direct computer search. The tables in
+\cite{AS16,CDW26} list $16$ triples with $s\ge4$, all with $u\le10$.
+The best general upper bound, from \cite{CDW26}, comes from the
+multicolour Ramsey number $R_3(s,t,u)$. It grows like $u^{s+t-3}$ up
+to logarithmic factors, so it is far from linear in $u$. In the
+diagonal case the analogous identity $S(3;k,k,k)=k^3-k^2-k-1$ was
+proved for all $k$ by Boza et al.\ \cite{Boza}, and later by a
+symbolic SAT computation \cite{CDLW}.
+
+\begin{theorem}
+Let $M=st-t-1$. For $(s,t)\in\{(4,4),(4,5),(4,6),(5,5)\}$ and every
+integer $u\ge t$, $S(3;s,t,u)=Mu-1$. Thus Conjecture~2 holds for
+these four infinite families.
+\end{theorem}
+
+Note that $stu-tu-u-1=(st-t-1)u-1=Mu-1$, and that $M$ is exactly the
+two-colour number $S(2;s,t)$. The proof has three parts:
+\begin{enumerate}
+\item a lower-bound construction for every $u$ (Section~2);
+\item one symbolic formula per pair that gives the upper bound for
+all $u\ge u_0$ (Section~3);
+\item direct certificates for $t\le u<u_0$ (Section~4).
+\end{enumerate}
+Section~5 describes the Lean formalization and Section~6 the
+computations.
+
+\section{The lower bound}
+
+The general lower bound is already in \cite{AS16}. We give the
+following explicit form because it is the one formalized.
+
+\begin{lemma}\label{lem:lower}
+Let $\chi_2$ be a $2$-colouring of $[1,M-1]$ with no colour-1
+solution of $L(s)$ and no colour-2 solution of $L(t)$. For $u\ge t$,
+define a colouring $\chi$ of $[1,Mu-2]$ by $\chi(x)=\chi_2(x)$ for
+$x\le M-1$, $\chi(x)=3$ for $M\le x\le (u-1)M-1$, and
+$\chi(x)=\chi_2(x-(u-1)M+1)$ for $x\ge (u-1)M$. Then $\chi$ has none
+of the three forbidden monochromatic solutions. Hence
+$S(3;s,t,u)\ge Mu-1$.
+\end{lemma}
+
+\begin{proof}
+Colour~3 is the middle block. Any $u-1$ summands from it have sum at
+least $(u-1)M$, which lies outside the block. Now take colour
+$i\in\{1,2\}$, with parameter $k\le u$, and a solution with $k-1$
+summands from the bottom block $[1,M-1]$ and the top block. There are
+four cases.
+
+If two or more summands are in the top block, the sum is at least
+$2(u-1)M>Mu-2$.
+
+If no summand is in the top block, the sum is at most
+$(k-1)(M-1)<(u-1)M$, so the target is in the bottom block. Then the
+solution is a $\chi_2$-solution, which is impossible.
+
+If exactly one summand is in the top block, write it as
+$(u-1)M-1+y$. The sum is at least $(u-1)M$, so the target is in the
+top block too, say $(u-1)M-1+z$. Then $z=y+(\text{the other
+summands})$, which is a $\chi_2$-solution of $L(k)$ in colour~$i$.
+This is impossible.
+\end{proof}
+
+For each pair a suitable $\chi_2$ was found by SAT. It is checked by
+evaluation in Lean (\texttt{smallColoringValid\_st}). For example,
+for $(4,4)$ the colouring of $[1,10]$ is $2\,2\,1\,1\,1\,1\,1\,1\,2\,2$
+up to symmetry.
+
+\section{The upper bound for all large \texorpdfstring{$u$}{u}: a symbolic formula}
+
+Fix $(s,t)$ and integers $B,J$. Let $E$ be the set of pairs
+$e=(a,b)$ with $0\le a\le M$ and $-B\le b\le B$, excluding $a=0$ with
+$b\le0$ and $a=M$ with $b\ge0$. Read $e$ as the linear function
+$e(u)=au+b$. Put $u_0=\max(B+1,\,J+1,\,s,\,t,\,4)$. For every $e\in
+E$ and $u\ge u_0$, $1\le e(u)\le Mu-1$. The formula $F(s,t,B,J)$ has
+the following variables and clauses:
+
+\begin{description}
+\item[Colour variables] $\col[e][i]$, for $i\in\{1,2,3\}$, with
+exactly one colour per $e$.
+
+\item[Colours 1 and 2] (parameter $k=s$ or $t$). Reachability
+variables $R_i[j][e]$, for $1\le j\le k-1$, mean ``$e$ is a sum of
+$j$ elements of colour~$i$''. The clauses are
+$\col[e][i]\to R_i[1][e]$ and $R_i[j-1][e]\wedge\col[f][i]\to
+R_i[j][e+f]$, where addition is coefficient-wise and $e+f\in E$. The
+forbidding clause is $\neg R_i[k-1][e]\vee\neg\col[e][i]$.
+
+\item[Colour 3: $c$-padding] The equation $L(u)$ has a growing
+number of summands, so no fixed reachability depth suffices. For each
+constant $c$ with $1\le c\le\min(B,M)$, the variable $P_c[j][x]$
+means ``$x(u)=(u-1-j)c+(\text{a sum of $j$ colour-3 elements})$''.
+The clauses are $\col[(0,c)][3]\to P_c[0][(c,-c)]$ and
+$P_c[j-1][x]\wedge\col[y][3]\to P_c[j][x-(0,c)+y]$, for $1\le j\le
+J$. Each step replaces one of the $u-1$ copies of $c$ by $y$. The
+forbidding clause is $\neg P_c[j][x]\vee\neg\col[x][3]$.
+\end{description}
+
+\begin{lemma}[Soundness; Lean \texttt{symForces\_of\_check\_forall}]
+\label{lem:sound}
+If $F(s,t,B,J)$ is unsatisfiable, then $S(3;s,t,U)\le MU-1$ for every
+$U\ge u_0$.
+\end{lemma}
+
+\begin{proof}
+Let $U\ge u_0$, and let $\chi$ be a colouring of $[1,MU-1]$ with no
+forbidden solution. Set $\col[e][i]$ true if and only if
+$\chi(e(U))=i$. Set $R$ and $P$ to the true representability
+predicates at $U$. Every implication clause holds by construction. A
+forbidding clause can fail only if it exhibits a monochromatic
+solution; for colour~3 that solution has exactly $u-1$ summands,
+since $U-1-j\ge0$. Two expressions may take the same value at $U$,
+but this is harmless, because the formula only gets weaker when it
+treats them as distinct. So $\chi$ induces a satisfying assignment, a
+contradiction.
+\end{proof}
+
+The formula does not depend on $u$, so a single SAT call settles
+infinitely many cases. The idea of indexing variables by polynomials
+comes from \cite{CDLW}, who used it for 3-variable Rado equations.
+What is new here is the $c$-padding device for equations whose number
+of summands grows with the parameter, together with the use of
+off-diagonal colour classes.
+
+\begin{table}[h]
+\centering
+\caption{Certified symbolic formulas (CaDiCaL~2, direct LRAT, then
+\texttt{lrattrim}).}
+\begin{tabular}{lrrrrrrl}
+\toprule
+$(s,t)$ & $M$ & $B$ & $J$ & $u_0$ & vars & clauses & solve (s)\ \ trimmed LRAT \\
+\midrule
+$(4,4)$ & 11 & 20 & 2 & 21 & 18{,}900  &  1{,}996{,}991 & 5.2\ \ 2.6~MB \\
+$(4,5)$ & 14 & 30 & 1 & 31 & 32{,}414  &  5{,}218{,}154 & 16.1\ \ 13.3~MB \\
+$(4,6)$ & 17 & 30 & 2 & 31 & 64{,}232  & 16{,}004{,}257 & 35.1\ \ 5.5~MB \\
+$(5,5)$ & 19 & 30 & 3 & 31 & 100{,}746 & 31{,}176{,}775 & 73.3\ \ 6.0~MB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For smaller $B$, and for smaller $J$ at the same $B$, the formula is
+satisfiable. We swept $B\in\{6,10,15,20,30\}$ and $J\in\{1,2,3\}$. A
+satisfying assignment does not give a real colouring. It only shows
+that the relaxation is too weak.
+
+\section{The finitely many small \texorpdfstring{$u$}{u}}
+
+For $t\le u<u_0$ we use the direct encoding on $[1,N]$ with
+$N=Mu-1$. It uses the same reachability scheme, with colour~3 at
+depth $u-1$. All $94$ instances ($17+26+25+26$) are unsatisfiable.
+Their direct-LRAT proofs took $160$~s of solver time in total and
+occupy $16.3$~MiB compressed. Each of the $94$ values also has a
+satisfying assignment at $N-1$, which an independent checker
+validated. That check is redundant given Lemma~\ref{lem:lower}, but
+it confirms the encoding.
+
+\section{Lean formalization}
+
+The trusted part is a $33$-line statement file (SHA-256
+\texttt{c6ed1e48\dots6f35}). It contains no SAT notions.
+
+\begin{lstlisting}
+def MonoSol (N k : Nat) (chi : Nat -> Fin 3) (i : Fin 3) : Prop :=
+  exists l : List Nat, l.length = k - 1 /\
+    (forall x in l, 1 <= x /\ x <= N /\ chi x = i) /\
+    1 <= l.sum /\ l.sum <= N /\ chi l.sum = i
+def Forces (N s t u) := forall chi,
+    MonoSol N s chi 0 \/ MonoSol N t chi 1 \/ MonoSol N u chi 2
+def Avoidable (N s t u) := exists chi,
+    not MonoSol N s chi 0 /\ not MonoSol N t chi 1 /\ not MonoSol N u chi 2
+def SchurEq (N s t u) := Forces N s t u /\ Avoidable (N - 1) s t u
+def ConjFamily (s t) := forall u, t <= u -> SchurEq ((s*t - t - 1)*u - 1) s t u
+\end{lstlisting}
+
+The final file proves \texttt{conj\_4\_4 : ConjFamily 4 4}, and
+likewise for $(4,5)$, $(4,6)$ and $(5,5)$.
+
+The formulas are generated by Lean functions. Soundness does not rely
+on reasoning about the generators. Instead, a pure Boolean validator
+decodes every variable and checks that each clause has one of the
+shapes in Section~3, including the coefficient identities and
+membership in $E$. The proposition ``every clause is valid'' is
+established by \texttt{native\_decide}. Soundness is proved once,
+generically, for any CNF all of whose clauses are valid. Certificates
+are stored gzip-compressed and Base64-encoded and checked by Lean's
+built-in LRAT checker (\texttt{Std.Tactic.BVDecide.LRAT.check}). A
+faulty decompressor could only make a check fail, never pass. The
+finite cases follow the same pattern.
+
+\texttt{\#print axioms} reports only \texttt{propext},
+\texttt{Classical.choice} and \texttt{Quot.sound}, plus the auxiliary
+axioms that \texttt{native\_decide} generates, one per decided
+computation. These cover the validators, the certificate checks and
+the $\chi_2$ checks. So the trusted base is Lean's kernel, its
+compiler, and the statement file. The full build takes about
+$50$~minutes on one core, dominated by the $94$ finite certificate
+checks ($23$~min) and the validity check for the $31$M-clause $(5,5)$
+formula ($12$~min).
+
+Independently of Lean, every trimmed proof was checked by a
+separately written LRAT checker. The $(4,4)$ symbolic formula was
+also regenerated from the written design by a second implementation,
+in Python, without reading the original generator. It was again
+unsatisfiable.
+
+\section{Limitations and outlook}
+
+For $(5,6)$ and $(6,6)$, the $c$-padding relaxation remained
+satisfiable at $B=30$ (and for $(5,6)$ also at $B=40$, $J=1$). Larger
+runs were limited by memory and disk. We expect richer padding to
+extend the method: several padded constants at once, or summands that
+are themselves linear in $u$. A two-parameter formula with
+expressions polynomial in both $t$ and $u$ could in principle settle
+Conjecture~2 for all $t$ at fixed $s$. We did not attempt this.
+
+On novelty, we checked the arXiv literature through October~2026 and
+the $55$ works citing \cite{AS16} that Semantic Scholar lists. None
+proves Conjecture~2 for an infinite family. We cannot exclude
+unpublished work.
+
+\begin{thebibliography}{9}
+\bibitem{AS16} T.~Ahmed and D.~J.~Schaal, On generalized Schur
+numbers, \emph{Experimental Mathematics} 25 (2016), 213--218.
+\bibitem{CDW26} On two conjectures for generalized off-diagonal Schur
+numbers, arXiv:2604.11030 (2026).
+\bibitem{CDLW} Y.~Chang, J.~A.~De~Loera and W.~J.~Wesley, Rado
+numbers and SAT computations, arXiv:2210.03262 (2022).
+\bibitem{Boza} L.~Boza, J.~M.~Mar\'in, M.~P.~Revuelta and
+M.~I.~Sanz, 3-color Schur numbers, \emph{Discrete Applied
+Mathematics} 263 (2019), 59--68.
+\bibitem{CFH17} L.~Cruz-Filipe, M.~J.~H.~Heule, W.~A.~Hunt~Jr.,
+M.~Kaufmann and P.~Schneider-Kamp, Efficient certified RAT
+verification, CADE-26 (2017).
+\bibitem{CaDiCaL} A.~Biere et al., CaDiCaL~2.0, CAV (2024).
+\end{thebibliography}
+
+\end{document}

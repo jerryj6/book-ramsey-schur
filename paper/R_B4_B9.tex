@@ -1,0 +1,392 @@
+\documentclass[11pt]{amsart}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[margin=1.05in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,keepspaces=true}
+
+\setlist{leftmargin=*,itemsep=2pt,topsep=3pt}
+\allowdisplaybreaks
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\cR}{\mathcal{R}}
+\renewcommand{\UrlFont}{\ttfamily\small}
+\makeatletter\g@addto@macro{\UrlBreaks}{\do\-\do\_\do\,}\makeatother
+
+\title[$R(B_4,B_9)=27$]{The book Ramsey number $R(B_4,B_9)=27$}
+\author{Jerry Yong (with computational assistance)}
+\date{October 2026}
+\thanks{Formal proof in Lean~4 with SAT certificates.}
+
+\begin{document}
+
+\begin{abstract}
+The book $B_n$ is $n$ triangles sharing one edge. We show
+$R(B_4,B_9)=27$. Before this work the value was known only to lie in
+$\{27,28\}$. The lower bound comes from the strongly regular graph
+$\mathrm{srg}(26,10,3,4)$. For the upper bound, a degree-peeling
+argument reduces the claim to $27$ SAT instances, each fixing the row
+of one vertex of given red degree. Each instance is refuted by a
+CaDiCaL LRAT certificate, $0.71$~GB of trimmed proof in all. The
+whole argument is checked in Lean~4: Lean generates every CNF itself,
+a Lean proof connects each CNF to the definition of a book-free
+colouring, and Lean's verified LRAT checker accepts every certificate.
+The resulting theorem
+$\mathrm{LowerBound}\ 26\ 4\ 9 \wedge \mathrm{UpperBound}\ 27\ 4\ 9$
+depends only on Lean's standard axioms and the \texttt{native\_decide}
+compiler-trust axiom. drat-trim's \texttt{lrat-check} also accepts all
+$27$ certificates independently.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+For graphs $G$ and $H$, the Ramsey number $R(G,H)$ is the least $N$
+such that every red/blue colouring of the edges of $K_N$ contains a
+red $G$ or a blue $H$. Book Ramsey numbers were first studied
+systematically by Rousseau and Sheehan \cite{RS78}, and they have
+attracted renewed interest
+\cite{CFW21,Wes24,LMPV24,DL26}. Books are also an ingredient in the
+recent exponential improvement for diagonal Ramsey numbers. Rousseau
+and Sheehan's counting bound gives $R(B_m,B_n)\le 2(m+n+1)$. For
+$(m,n)=(4,9)$ this is $28$. A strongly regular graph gives the lower
+bound $27$ (Section~3). Radziszowski's dynamic survey
+\cite[Table~IXa]{Rad} lists $R(B_4,B_9)$ as $27$--$28$. The recent
+computational papers \cite{LMPV24,Wes24} and the algebraic paper
+\cite{DL26} do not treat this case.
+
+\begin{theorem}\label{thm:main}
+$R(B_4,B_9)=27$.
+\end{theorem}
+
+The proof is computer-assisted. Section~2 fixes notation, Section~3
+gives the lower bound, Section~4 gives the reduction, Section~5 the
+encoding, and Section~6 the certificates and their verification.
+Section~7 lists the controls we ran against encoding errors.
+Section~8 states exactly what has to be trusted.
+
+\section{Preliminaries}
+
+Identify a colouring of $K_N$ with its red graph $\cR$ on vertex set
+$[N]$. For a pair $uv$, write $c_R(u,v)$ for the number of common red
+neighbours and $c_B(u,v)$ for the number of common blue neighbours. A
+red $B_m$ exists exactly when some red edge $uv$ has $c_R(u,v)\ge m$;
+similarly a blue $B_n$ exists exactly when some blue edge has
+$c_B(u,v)\ge n$. A colouring is $(m,n)$-good if it has neither. Then
+$R(B_m,B_n)>N$ if and only if some $(m,n)$-good colouring of $K_N$
+exists. The Lean development states this directly.
+\texttt{Statement.lean} is 23 lines, uses no library beyond core Lean,
+and is the only file a reader must audit to know what is proved:
+
+\begin{lstlisting}
+def BookFree (red : Fin N -> Fin N -> Bool) (m n : Nat) : Prop :=
+  forall u v, u != v -> (red u v = true  -> redCodeg  red u v < m) /\
+                        (red u v = false -> blueCodeg red u v < n)
+def LowerBound N m n := exists red, Symm red /\ BookFree red m n
+def UpperBound N m n := forall red, Symm red -> not BookFree red m n
+\end{lstlisting}
+
+Here \texttt{redCodeg} and \texttt{blueCodeg} count, by list filtering
+over \texttt{Fin~N}, the vertices $w\notin\{u,v\}$ adjacent to both $u$
+and $v$ in red (respectively, in blue). So Theorem~\ref{thm:main} is
+$\mathrm{LowerBound}\ 26\ 4\ 9 \wedge \mathrm{UpperBound}\ 27\ 4\ 9$.
+
+\section{The lower bound}
+
+Let $G$ be any $\mathrm{srg}(26,10,3,4)$, for example a Paulus graph.
+Colour the edges of $G$ red and all other pairs blue. A red edge has
+exactly $\lambda=3<4$ common red neighbours. Take a blue pair $uv$.
+Exactly $\mu=4$ vertices are red-adjacent to both, so $2k-\mu=16$
+vertices are red-adjacent to at least one of them. The common blue
+neighbourhood therefore has size $24-16=8<9$. Hence the colouring is
+$(4,9)$-good, and $R(B_4,B_9)\ge 27$. The Lean file
+\texttt{B49Witness.lean} contains an explicit such graph (130 edges,
+given in Appendix~A) and checks \texttt{BookFree} by
+\texttt{native\_decide}. The graph was found by the SAT pipeline of
+Section~5. Separately, a script independent of the CNF code confirms
+that it is $10$-regular with $\lambda=3$ and $\mu=4$.
+
+\section{Reduction by degree peeling}
+
+Write $d(v)$ for the red degree. For $0\le lo\le d\le hi\le N-1$, let
+$F(N,m,n,d,lo,hi)$ be the CNF of Section~5. It is satisfiable when an
+$(m,n)$-good colouring of $K_N$ exists that has all red degrees in
+$[lo,hi]$ and, after a suitable relabelling, has vertex $0$ of red
+degree $d$.
+
+\begin{lemma}[Row exclusion; Lean \texttt{row\_excl\_of\_check}]
+\label{lem:rowexcl}
+Suppose $F(N,m,n,d,lo,hi)$ is unsatisfiable. Then no $(m,n)$-good
+colouring of $K_N$ with all red degrees in $[lo,hi]$ has a vertex of
+red degree $d$.
+\end{lemma}
+
+\begin{proof}[Proof sketch]
+Suppose $c$ is such a colouring and $v$ has $d(v)=d$. Relabel so that
+$v=0$ and its red neighbours are $1,\dots,d$. Next, apply the
+permutation of $\{1,\dots,d\}$ and the permutation of
+$\{d+1,\dots,N-1\}$ that make the colouring lexicographically maximal
+among those fixing row $0$. The result satisfies every clause of $F$,
+including the lex-leader clauses. Lean proves each step: relabelling
+preserves \texttt{Symm}, \texttt{BookFree} and red degrees, and a
+lex-maximal representative exists.
+\end{proof}
+
+Because $[lo',hi']\subseteq[lo,hi]$, an exclusion proved for $[lo,hi]$
+also holds for every colouring whose degrees lie in $[lo',hi']$.
+Lemma~\ref{lem:rowexcl} then lets us shrink the admissible degree
+interval one endpoint at a time (\texttt{peel\_low},
+\texttt{peel\_high}). Let $c$ be a $(4,9)$-good colouring of $K_{27}$.
+Its degrees start in $[0,26]$, and the following refutations shrink
+that range to nothing:
+
+\begin{table}[h]
+\centering
+\caption{The peeling chain for $N=27$, $(m,n)=(4,9)$.}
+\begin{tabular}{lll}
+\toprule
+step & instances $(d;lo,hi)$ & degrees afterwards \\
+\midrule
+1 & $d=26,25,\dots,11$; $[0,26]$ & $[0,10]$ \\
+2 & $d=0,1,\dots,6$; $[0,26]$    & $[7,10]$ \\
+3 & $(7;\,7,10)$                 & $[8,10]$ \\
+4 & $(8;\,8,10)$                 & $[9,10]$ \\
+5 & $(10;\,9,10)$                & $[9,9]$  \\
+6 & $(9;\,9,9)$                  & $\emptyset$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For step~6, a $9$-regular graph on $27$ vertices cannot exist by the
+handshake lemma. The certificate refutes this case directly anyway;
+the parity argument is not used in Lean.
+
+\subsection*{Remark: why the instances are small}
+
+The following count explains why the instances are easy, and the
+paper's other numbers do not depend on it. By Goodman's identity, the
+number of monochromatic triangles is
+$T=\binom{27}{3}-\frac12\sum_v d(v)(26-d(v))$. In a $(4,9)$-good
+colouring each red edge lies in at most $3$ red triangles and each
+blue edge in at most $8$ blue triangles. With $r$ red edges this gives
+$T\le r+8(351-r)/3$. Combining the two, $\sum_v f(d(v))\ge 1989$,
+where $f(d)=73d/6-d^2/2$. The maximum of $f$ is $f(12)=74$, so the
+total deficit $\sum_v(74-f(d(v)))$ is at most $9$. The deficit is $0$
+at $d=12$, $1/3$ at $d=13$, $2/3$ at $d=11$ and $7/3$ at $d=10$.
+Counting alone therefore forces nearly all degrees into
+$\{11,12,13\}$, and it excludes every colouring with all degrees in
+$[8,10]$. Rousseau and Sheehan's bound of $28$ is the same count at
+$N=28$. The substantive content of the certificates is that no vertex
+can have red degree $11$, $12$ or $13$. Accordingly, the $d=11$
+certificate is the largest (Table~2).
+
+\section{Encoding}
+
+Each pair $\{i,j\}$ gets one variable, true meaning red. Further
+Tseitin variables $t_{R,ijk}$ and $t_{B,ijk}$ are shared by the three
+pairs of each triple and mark red and blue triangles. For every pair
+$\{i,j\}$, a sequential counter \cite{Sin05} over the $N-2$ red
+triangle variables, guarded by $x_{ij}$, enforces at most $m-1$ of
+them. A second counter over the blue triangle variables, guarded by
+$\neg x_{ij}$, enforces at most $n-1$. Row~0 is fixed by unit clauses
+($x_{0j}$ true exactly for $1\le j\le d$). Sequential counters bound
+every red degree to $[lo,hi]$. Finally, lex-leader clauses order
+consecutive rows within the blocks $\{1,\dots,d\}$ and
+$\{d+1,\dots,N-1\}$. For $N=27$ the instances have
+$122{,}958$--$124{,}362$ variables and $264{,}560$--$267{,}260$
+clauses. The CNF is defined in Lean (\texttt{RowCNF.lean}, function
+\texttt{rcnf}) as a pure function. The DIMACS files given to the
+solver are printed by a compiled Lean executable from that same
+definition, so the formula Lean checks is exactly the formula that was
+solved.
+
+\section{Certificates and verification}
+
+CaDiCaL~3.0.1 produced each refutation as binary LRAT. Lean's
+\texttt{lrattrim} trimmed it and gzip compressed it. Each certificate
+is embedded in a Lean module as Base64 text. Lean decodes it with a
+DEFLATE decoder written in pure Lean, parses it, and checks it against
+\texttt{rcnf}\;$27\;4\;9\;d\;lo\;hi$ with the LRAT checker of Lean's
+standard library (\texttt{Std.Tactic.BVDecide.LRAT.check}), whose
+soundness is proved in Lean. The decoder's correctness is not part of
+the trusted base: a faulty decoder could only produce a certificate
+the checker rejects, never a false theorem. The checking computation
+runs under \texttt{native\_decide}.
+
+\begin{table}[h]
+\centering
+\caption{The 27 certificates (bytes of trimmed text LRAT; Lean module
+build time).}
+\footnotesize
+\begin{tabular}{rrrrrr@{\hspace{3em}}rrrrrr}
+\toprule
+$d$ & $lo$ & $hi$ & trimmed LRAT & gzip & Lean (s) &
+$d$ & $lo$ & $hi$ & trimmed LRAT & gzip & Lean (s) \\
+\midrule
+26 & 0 & 26 &     15{,}020 &     3{,}921 & 281 & 13 & 0 & 26 &   1{,}394{,}189 &    300{,}706 & 286 \\
+25 & 0 & 26 &     20{,}848 &     5{,}294 & 282 & 12 & 0 & 26 &   5{,}386{,}776 &  1{,}096{,}334 & 297 \\
+24 & 0 & 26 &     44{,}393 &     9{,}812 & 272 & 11 & 0 & 26 & 356{,}718{,}357 & 71{,}350{,}240 & 1116 \\
+23 & 0 & 26 &     21{,}186 &     5{,}403 & 273 &  0 & 0 & 26 &      10{,}543 &      2{,}666 & 304 \\
+22 & 0 & 26 &     26{,}037 &     7{,}009 & 274 &  1 & 0 & 26 &     125{,}938 &     26{,}584 & 309 \\
+21 & 0 & 26 &     23{,}550 &     6{,}032 & 276 &  2 & 0 & 26 &   4{,}295{,}360 &    891{,}272 & 292 \\
+20 & 0 & 26 &     21{,}170 &     5{,}754 & 287 &  3 & 0 & 26 &   4{,}912{,}499 &    986{,}627 & 292 \\
+19 & 0 & 26 &     31{,}831 &     8{,}054 & 287 &  4 & 0 & 26 &   6{,}053{,}388 &  1{,}235{,}969 & 264 \\
+18 & 0 & 26 &     19{,}461 &     4{,}860 & 298 &  5 & 0 & 26 &  43{,}798{,}210 & 10{,}385{,}704 & 353 \\
+17 & 0 & 26 &     15{,}519 &     4{,}216 & 295 &  6 & 0 & 26 & 267{,}533{,}942 & 63{,}315{,}794 & 875 \\
+16 & 0 & 26 &     68{,}762 &    17{,}369 & 287 &  7 & 7 & 10 &   4{,}331{,}226 &    901{,}579 & 641 \\
+15 & 0 & 26 &    170{,}301 &    46{,}411 & 288 &  8 & 8 & 10 &  12{,}776{,}008 &  2{,}319{,}164 & 645 \\
+14 & 0 & 26 &    432{,}138 &    93{,}729 & 280 & 10 & 9 & 10 &   2{,}855{,}260 &    588{,}973 & 606 \\
+   &    &    &              &            &     &  9 & 9 &  9 &      739{,}140 &     93{,}373 & 556 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In total: $711{,}841{,}052$~B of trimmed LRAT,
+$153{,}712{,}849$~B gzip, and $10{,}516$~s of Lean build; final
+assembly $2.2$~s.
+
+The final module \texttt{R49Final.lean} chains the $27$ exclusions as
+in Table~1. Lean reports:
+
+\begin{lstlisting}
+'BookRamsey.R49.R_B4_B9_eq' depends on axioms: [propext,
+  Classical.choice, Quot.sound,
+  BookRamsey.b49_lower._native.native_decide.ax_1_1,
+  BookRamsey.R49.check_d00_lo0_hi26._native.native_decide.ax_1_1,
+  ... (27 such check axioms)]
+\end{lstlisting}
+
+No \texttt{sorry} or user-declared axiom occurs. Each
+\texttt{native\_decide} axiom says that one specific closed Boolean
+computation, an LRAT check or the witness check, evaluates to true
+when compiled.
+
+\subsection*{Independent check}
+
+All $27$ trimmed certificates were also checked with
+\texttt{lrat-check} from drat-trim \cite{WHH14}, against the same
+DIMACS files. This checker shares no code with CaDiCaL or Lean, and it
+accepted all $27$.
+
+\section{Controls against encoding errors}
+
+The instances are much easier than the neighbouring open case
+$R(B_4,B_7)$ (Section~9), so we ran the following controls.
+\begin{enumerate}[label=(\roman*)]
+\item Satisfiable control at $N=26$: the same generator, with
+$(d;lo,hi)=(10;10,10)$, returns SAT in $4.7$~s. The model is an
+$\mathrm{srg}(26,10,3,4)$ and passes an independent codegree check.
+Since the Section~4 remark makes $10$-regular colourings
+Goodman-tight at $N=26$, this tests the encoding exactly at the
+extremal configuration.
+\item Independent generator: a separately written Python encoder with
+the same semantics but different code agrees on the decisive cases at
+$N=27$, $(8;8,10)$, $(10;9,10)$ and $(9;9,9)$, all UNSAT, and on the
+$N=26$ SAT control.
+\item Known values: the pipeline reproduces $R(B_3,B_5)=17$,
+$R(B_2,B_9)=22$ and $R(B_4,B_6)=22$, with SAT on the corresponding
+critical sizes. $R(B_4,B_6)\le 22$ is formalised end to end in the
+same Lean framework.
+\end{enumerate}
+Controls (i)--(iii) are evidence for the encoding, not part of the
+proof. The proof rests on Lemma~\ref{lem:rowexcl}, which Lean proves
+against \texttt{Statement.lean}.
+
+\section{Trusted base}
+
+To accept Theorem~1 from the artefact, one must trust: the Lean~4
+kernel (v4.34.1); the faithfulness of \texttt{Statement.lean} to the
+mathematical definition (Section~2); and the Lean compiler and runtime
+used by \texttt{native\_decide} for $28$ closed computations. One need
+not trust CaDiCaL, the CNF printer, the DEFLATE decoder, the cube or
+peeling scripts, or any Python code. The \texttt{native\_decide} trust
+could be removed with a kernel-only \texttt{decide} on smaller
+certificates, but that is impractical at $0.7$~GB. Section~6 records
+the independent drat-trim check, which gives assurance that does not
+depend on Lean's compiler.
+
+\section{Related work and outlook}
+
+The SAT approach to book Ramsey numbers follows \cite{Wes24}, and the
+flag-algebra bounds are from \cite{LMPV24}. Combining row fixing and
+degree peeling with a Lean-checked bridge to the definition is, as far
+as we know, new for these problems. The same pipeline is being applied
+to $R(B_4,B_7)\in\{22,23\}$. There every case of the analogous chain
+has been refuted, and all $347$ certificates pass drat-trim's
+checker, but the Lean assembly (tens of gigabytes of trimmed proof)
+was still building when this paper was written. We make no claim about
+$R(B_4,B_7)$ here. All negative attempts, including circulant and
+block-circulant searches, Goodman cuts and monolithic solving, are
+logged in the accompanying ledger.
+
+\appendix
+
+\section{The witness}
+
+An $\mathrm{srg}(26,10,3,4)$ on vertices $0$--$25$ as an edge list.
+The same list appears in \texttt{B49Witness.lean}:
+
+\begin{quote}\small
+$130$ edges: 0--1 0--2 0--3 0--4 0--5 0--6 0--7 0--8 0--9 0--10
+1--2 1--3 1--4 1--11 1--12 1--13 1--14 1--15 1--16
+2--3 2--5 2--11 2--17 2--18 2--19 2--20 2--21
+3--6 3--12 3--17 3--22 3--23 3--24 3--25
+4--7 4--8 4--13 4--14 4--18 4--19 4--22 4--23
+5--7 5--9 5--15 5--16 5--18 5--20 5--22 5--24
+6--9 6--10 6--13 6--15 6--18 6--21 6--23 6--25
+7--10 7--13 7--16 7--17 7--19 7--24 7--25
+8--9 8--10 8--12 8--14 8--17 8--20 8--21 8--22
+9--11 9--14 9--16 9--21 9--23 9--24
+10--11 10--12 10--15 10--19 10--20 10--25
+11--14 11--16 11--19 11--20 11--23 11--25
+12--15 12--16 12--19 12--21 12--22 12--24
+13--15 13--16 13--17 13--20 13--21 13--23
+14--15 14--17 14--18 14--24 14--25
+15--18 15--20 15--24
+16--21 16--22 16--25
+17--20 17--21 17--24 17--25
+18--19 18--21 18--22 18--25
+19--21 19--23 19--24
+20--22 20--23 22--23 22--25 23--24
+\end{quote}
+
+\begin{thebibliography}{LMPV24}
+\bibitem[CFW21]{CFW21} D.~Conlon, J.~Fox, Y.~Wigderson. Ramsey numbers
+of books and quasirandomness. \emph{Combinatorica} (2022);
+arXiv:2001.00407.
+\bibitem[DL26]{DL26} L.~Dai, Q.~Lin. Book Ramsey numbers via algebraic
+constructions. arXiv:2606.07214 (2026).
+\bibitem[LMPV24]{LMPV24} B.~Lidick\'y, G.~McKinley, F.~Pfender,
+S.~Van~Overberghe. Small Ramsey numbers for books, wheels, and
+generalizations. arXiv:2407.07285 (2024).
+\bibitem[Rad]{Rad} S.~Radziszowski. Small Ramsey numbers.
+\emph{Electron.~J.~Combin.}, Dynamic Survey DS1, Table~IXa.
+\bibitem[RS78]{RS78} C.~C.~Rousseau, J.~Sheehan. On Ramsey numbers
+for books. \emph{J.~Graph Theory} 2 (1978) 77--87.
+\bibitem[Sin05]{Sin05} C.~Sinz. Towards an optimal CNF encoding of
+Boolean cardinality constraints. CP~2005, LNCS~3709.
+\bibitem[Wes24]{Wes24} W.~J.~Wesley. Lower bounds for book Ramsey
+numbers. arXiv:2410.03625 (2024).
+\bibitem[WHH14]{WHH14} N.~Wetzler, M.~Heule, W.~Hunt. DRAT-trim:
+efficient checking and trimming using expressive clausal proofs.
+SAT~2014, LNCS~8561.
+\end{thebibliography}
+
+\end{document}

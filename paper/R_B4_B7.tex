@@ -1,0 +1,213 @@
+\documentclass[11pt]{amsart}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[margin=1.05in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\small,breaklines=true,columns=fullflexible,keepspaces=true}
+
+\setlist{leftmargin=*,itemsep=2pt,topsep=3pt}
+\allowdisplaybreaks
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{remark}[theorem]{Remark}
+
+\renewcommand{\UrlFont}{\ttfamily\small}
+\makeatletter\g@addto@macro{\UrlBreaks}{\do\-\do\_\do\,}\makeatother
+
+\title[$R(B_4,B_7)=22$]{The book Ramsey number $R(B_4,B_7)=22$}
+\author{Jerry Yong (with computational assistance)}
+\date{October 2026}
+\thanks{Formal proof in Lean~4 with SAT certificates.}
+
+\begin{document}
+
+\begin{abstract}
+The book $B_n$ is $n$ triangles sharing one edge. We prove
+$R(B_4,B_7)=22$. This closes the gap $\{22,23\}$ left by Lidick\'y,
+McKinley, Pfender and Van~Overberghe \cite{LMPV}, whose flag-algebra
+bound gave $R(B_4,B_7)\le 23$. The lower bound is their $21$-vertex
+colouring. For the upper bound, a degree-peeling argument reduces the
+problem to $22$ row-fixed SAT instances. The two hardest are split
+into $312$ and $13$ cubes, each with a certified coverage proof. All
+$347$ LRAT certificates are checked inside Lean~4 against CNFs that
+Lean itself generates. A Lean-proved semantic bridge connects these
+CNFs to a statement file written from the definition. The final
+theorem \texttt{R\_B4\_B7\_eq : LowerBound 21 4 7 $\wedge$ UpperBound
+22 4 7} has no \texttt{sorry}. It depends only on Lean's standard
+axioms and the trust in \texttt{native\_decide}. An independent LRAT
+checker also accepted all $347$ certificates.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+
+For graphs $G$ and $H$, $R(G,H)$ is the least $N$ such that every
+red/blue colouring of the edges of $K_N$ contains a red $G$ or a blue
+$H$. Small book Ramsey numbers are tabulated in Radziszowski's survey
+\cite{Rad}, Table~IXa. The value $R(B_4,B_7)\in\{22,23\}$ was listed
+as open in \cite{LMPV} and in the 2026 revision of \cite{Rad}. The
+same pipeline settled $R(B_4,B_9)=27$ in a companion note \cite{B49}.
+Note that $R(B_4,B_7)$ is not covered by the recent theorem
+$R(B_{n-2},B_n)\le 4n-3$ of Dai and Lin \cite{DL26}, which addresses
+books differing by two.
+
+\begin{theorem}
+$R(B_4,B_7)=22$.
+\end{theorem}
+
+A colouring of $K_N$ is $(m,n)$-good when every red edge has fewer
+than $m$ common red neighbours and every blue edge has fewer than $n$
+common blue neighbours. Thus $R(B_m,B_n)>N$ if and only if $K_N$ has
+an $(m,n)$-good colouring. The Lean statement file (SHA-256
+\texttt{88a1e1b3\dots d643}) defines this property directly by
+counting codegrees, and states:
+
+\begin{lstlisting}
+def LowerBound N m n := exists red, Symm red /\ BookFree red m n
+def UpperBound N m n := forall red, Symm red -> not BookFree red m n
+\end{lstlisting}
+
+\section{Lower bound}
+
+LMPV \cite{LMPV} give a $(4,7)$-good colouring of $K_{21}$. We embed
+it as a $21\times 21$ matrix and check it in Lean by evaluation
+(\texttt{lmpv\_lower\_bound}).
+
+\section{Reduction by degree peeling}
+
+Let $F(d,lo,hi)$ be the CNF of Section~4. It asserts a $(4,7)$-good
+colouring of $K_{22}$ with every red degree in $[lo,hi]$, in which
+vertex~$0$ has red degree $d$, the red neighbours of vertex~$0$ are
+$1,\dots,d$, and lex-leader constraints hold inside the blocks
+$\{1,\dots,d\}$ and $\{d+1,\dots,21\}$.
+
+\begin{lemma}[Row exclusion; Lean \texttt{row\_excl\_of\_check}]
+If $F(d,lo,hi)$ is unsatisfiable, then no good colouring with all red
+degrees in $[lo,hi]$ has a vertex of red degree $d$.
+\end{lemma}
+
+The proof relabels the vertex to $0$ and its red neighbours to
+$1,\dots,d$. It then takes a lexicographically maximal representative
+under the permutations of the two blocks, and that representative
+satisfies the lex-leader constraints. Lean proves this once for all
+$N,m,n,d,lo,hi$. The peeling chain below shrinks the admissible degree
+interval until it is empty.
+
+\begin{table}[h]
+\centering
+\caption{Peeling chain for $N=22$, $(m,n)=(4,7)$.}
+\begin{tabular}{llll}
+\toprule
+step & instances $(d;lo,hi)$ & degrees afterwards & certificate \\
+\midrule
+S1 & $d\in\{0..5,\,14..21\}$; $[0,21]$ & $[6,13]$ & monolithic \\
+S2 & $(13;6,13),\ (12;6,12),\ (11;6,11)$ & $[6,10]$ & monolithic \\
+S3 & $(6;6,10)$ & $[7,10]$ & monolithic \\
+S4 & $(10;7,10)$ & $[7,9]$ & 312 cubes + coverage \\
+A1 & $(7;7,9)$ & $[8,9]$ & monolithic \\
+A2 & $(8;8,9)$ & $[9,9]$ & 3 cubes + coverage \\
+A3 & $(9;9,9)$ & $\emptyset$ & 10 cubes + coverage \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We first tried the max-side case $(9;7,9)$. It produced a monolithic
+proof above $6$~GiB, so we peeled from the minimum side instead. A
+$9$-regular graph on $22$ vertices is not excluded by parity, so A3 is
+a genuine case. It is refuted by its certificate.
+
+\section{Encoding and cubes}
+
+The encoding uses:
+\begin{itemize}
+\item one variable per edge;
+\item Tseitin variables for red and blue triangles, shared by the
+three edges of each triple;
+\item sequential counters bounding the monochromatic codegree of each
+edge, and the red degree of each vertex;
+\item unit clauses fixing row~$0$, and the block lex-leader clauses.
+\end{itemize}
+Instances have $45$k--$59$k variables and $101$k--$127$k clauses. On
+known values the encoding gives the expected answers: $(3,5)$ is SAT
+at $16$ vertices and UNSAT at $17$, and $(4,6)$ is SAT at $21$ and
+UNSAT at $22$. The same Lean pipeline reproves $R(B_4,B_6)\le 22$
+(\texttt{R\_B4\_B6\_le\_22}).
+
+Cases S4, A2 and A3 use cube-and-conquer. \texttt{march} generated the
+cubes, and hard cubes were split again. Lean's
+\texttt{unsat\_of\_cubes} states: if $F\wedge c$ is UNSAT for every
+cube $c$, and $F\wedge\bigwedge_c\neg c$ is UNSAT, then $F$ is UNSAT.
+The coverage formula is itself refuted by an LRAT certificate checked
+in Lean.
+
+\section{Certificates and verification}
+
+Every instance was solved by CaDiCaL with direct binary LRAT output,
+then trimmed with \texttt{lrattrim}. The trimmed text LRAT for S4
+alone is about $40$~GB. In Lean, certificates are embedded as
+base64(gzip(LRAT)) and decoded by a pure-Lean inflate. Soundness does
+not depend on the decoder, because the only fact used is
+\texttt{LRAT.check cert F = true} for the Lean-generated $F$. A faulty
+decoder can only make a check fail. The S4 batches dominate the build:
+$95$ modules, about $18$~h at two concurrent builds.
+
+\texttt{\#print axioms R\_B4\_B7\_eq} lists \texttt{propext},
+\texttt{Classical.choice} and \texttt{Quot.sound}, plus one auxiliary
+axiom per \texttt{native\_decide} computation. No \texttt{sorryAx}
+appears. Separately, a C LRAT checker sharing no code with CaDiCaL or
+Lean accepted all $347$ trimmed certificates.
+
+During the final build, the compiled Lean outputs for $144$ S4 cube
+proofs were lost after their text proofs had been deleted to save
+disk. Those $144$ cubes were re-solved from the same Lean-generated
+CNFs. The new proofs again passed the independent checker and Lean.
+The manifest records both the original and the regenerated hashes.
+
+\section{Negative results}
+
+The following attempts did not succeed:
+\begin{itemize}
+\item exhaustive circulant and 2-block-circulant searches on $22$
+vertices, and searches with six prescribed automorphism groups, found
+no good colouring;
+\item one-vertex extensions of the LMPV witness all failed;
+\item Goodman-count cuts gave no speedup;
+\item monolithic Kissat and CaDiCaL runs on S4 timed out at $6$~h;
+\item unrestricted cube-and-conquer on the full problem ($546$ cubes)
+stalled on a hard block.
+\end{itemize}
+A complete log of attempts is kept with the artifacts.
+
+\section{Scope}
+
+This settles one table entry. As with $R(B_4,B_9)$, the methodological
+point is the end-to-end Lean chain from the raw definition, and its
+scaling to tens of gigabytes of proof text. We checked arXiv through
+October~2026 and found no other proof. We cannot exclude unpublished
+work.
+
+\begin{thebibliography}{9}
+\bibitem{LMPV} B.~Lidick\'y, G.~McKinley, F.~Pfender and
+S.~Van~Overberghe, \emph{Electronic Journal of Combinatorics} 32(4)
+(2025), P4.64.
+\bibitem{Rad} S.~P.~Radziszowski, Small Ramsey numbers,
+\emph{Electronic Journal of Combinatorics}, Dynamic Survey DS1.
+\bibitem{B49} J.~Yong (with computational assistance), The book
+Ramsey number $R(B_4,B_9)=27$, October 2026.
+\bibitem{DL26} L.~Dai and Q.~Lin, arXiv:2606.07214 (2026).
+\bibitem{Wes24} W.~J.~Wesley, arXiv:2410.03625 (2024).
+\end{thebibliography}
+
+\end{document}
