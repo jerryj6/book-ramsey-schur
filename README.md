@@ -1,63 +1,199 @@
 # Book Ramsey numbers and Schur numbers — computer-assisted proofs
 
-Computer-assisted proofs of three results, each with a paper, an end-to-end
-Lean 4 formalization, and independently verifiable SAT certificates:
+This repository contains computer-assisted proofs of three results, each shipped with
 
-* **R(B₄,B₇) = 22** — every red/blue colouring of K₂₂ contains a red book
-  B₄ (4 triangles sharing an edge) or a blue book B₇ (`paper/R_B4_B7.pdf`,
-  `lean/r47/`).
-* **R(B₄,B₉) = 27** — settling the previously open {27,28} cell of the book
-  Ramsey table (`paper/R_B4_B9.pdf`, `lean/b49/`).
-* **Ahmed–Schaal Conjecture 2** — S(3;s,t,u) for (s,t) ∈ {(4,4),(4,5),(4,6),(5,5)}
-  and all u ≥ t, via a *symbolic* SAT encoding whose single CNF covers all u
-  (`paper/Schur_AhmedSchaal.pdf`, `lean/schur/`).
+* a paper describing the argument (`paper/`, LaTeX sources included),
+* an end-to-end Lean 4 formalization (`lean/`),
+* the SAT encoders, cube generators and checkers used for the computational leaves
+  (`sat/`), with the certificates (CNF / LRAT, ≈ 44 GB) archived on Zenodo
+  (see [Certificates](#certificates)),
+* a complete per-leaf coverage manifest and verification record (`docs/`).
 
-Lower bounds are witnessed constructions (e.g. `lean/b49/B49Witness.lean`);
-upper bounds are UNSAT verdicts on degree-stratified cube partitions whose
-LRAT certificates are independently checkable — see below.
+The results are computer-assisted and have not been externally peer-reviewed; see
+[Status and caveats](#status-and-caveats).
+
+## Results
+
+### R(B₄,B₉) = 27
+
+Every red/blue colouring of K₂₇ contains a red book B₄ (4 triangles sharing a
+common edge) or a blue book B₉. This settles the previously open `{27, 28}` cell
+of the book Ramsey table. In Lean (`lean/b49/R49Final.lean`):
+
+```lean
+theorem R_B4_B9_eq : LowerBound 26 4 9 ∧ UpperBound 27 4 9
+```
+
+`UpperBound N m n` states that every symmetric colouring of `K_N` has a red edge
+with ≥ m red common neighbours or a blue edge with ≥ n blue common neighbours;
+`LowerBound N m n` is an explicit counterexample colouring of `K_N`
+(`lean/b49/Statement.lean`).
+
+### R(B₄,B₇) = 22
+
+Every red/blue colouring of K₂₂ contains a red B₄ or a blue B₇, and there is a
+colouring of K₂₁ avoiding both. In Lean (`lean/r47/R47Final.lean`):
+
+```lean
+theorem R_B4_B7_eq : LowerBound 21 4 7 ∧ UpperBound 22 4 7
+```
+
+### Ahmed–Schaal Conjecture 2
+
+For generalized Schur numbers `S(3;s,t,u)` — the least N such that every
+3-colouring of `[1,N]` has a colour-0 solution of `x₁+…+x_{s−1} = x_s`, a
+colour-1 solution for `t`, or a colour-2 solution for `u` (repetition allowed) —
+the conjectured closed form `S(3;s,t,u) = s·t·u − t·u − u − 1` is proved for
+
+    (s,t) ∈ {(4,4), (4,5), (4,6), (5,5)}   and all u ≥ t.
+
+In Lean (`lean/schur/SchurFinal.lean`), e.g.
+
+```lean
+theorem conj_4_4 : ConjFamily 4 4
+```
+
+## Proof overview
+
+### Book Ramsey upper bounds
+
+1. **Reduction.** A good colouring of `K_N` (no red B_m, no blue B_n) is encoded
+   as a SAT instance on the `C(N,2)` edge variables: book clauses forbid any
+   edge having ≥ m (resp. ≥ n) same-colour common neighbours
+   (`sat/gen_bookrow.c`).
+2. **Degree stratification.** In any B₄-free red graph the red-degree of every
+   vertex is bounded by a triangle-free graph on that many vertices. The search
+   space is partitioned by per-vertex degree bounds (`Peeling.lean`), and each
+   stratum is split into cubes (partial assignments) that are refuted
+   independently.
+3. **Coverage tree.** Hard leaves are split recursively by degree-pin
+   (fixing one vertex's exact degree) and edge-OR descent, producing a coverage
+   tree whose 813 leaves are each individually UNSAT
+   (`docs/COVERAGE.csv` — one row per leaf: family, verdict, LRAT bytes, sha256).
+4. **Certificates.** Every leaf carries a CaDiCaL **binary** LRAT certificate
+   (`.lrat.gz`), independently checkable by `lrat-check` after conversion
+   (`sat/blrat2txt.c`, `scripts/verify_cert.sh`).
+
+### Lower bounds
+
+* `R(B₄,B₉) > 26`: the unique srg(26,10,3,4) used as the red graph — red-degrees
+  are 10 and its neighbourhood graph is triangle-free; checked by
+  `native_decide` in `lean/b49/B49Witness.lean`.
+* `R(B₄,B₇) > 21`: an explicit colouring of `K₂₁`, `LowerBound 21 4 7` in
+  `lean/r47/R47Final.lean`.
+
+### Schur (symbolic encoding)
+
+For each (s,t) pair the statement splits into a finite range of u (one ordinary
+CNF per u) and a *symbolic* range u ≥ threshold, where a single CNF — built over
+interval-structured colour variables — proves every u simultaneously
+(`lean/schur/SymCNF.lean`, `SymValid.lean`, `SymSound.lean`). Lower-bound
+colourings are given in `lean/schur/Construction.lean`.
+
+## Trust base
+
+`#print axioms` invocations are included in `R49Final.lean`, `R47Final.lean` and
+`schur/Axioms.lean`. Semantic arguments (definitions, reductions, encoding
+soundness, witness validity) are kernel-checked; `native_decide` is used only
+for closed Boolean computations (the srg witness check, the 312 embedded d10
+coverage cubes in `Step_d10.lean`, coverage checks). There is no `sorry` in the
+import closure.
+
+The SAT solvers are not trusted: each leaf's claim is its LRAT certificate, and
+a wrong certificate makes `lrat-check` fail.
+
+## Certificates
+
+The ≈ 44 GB certificate archive (CNF + gzipped binary LRAT + solver log per
+leaf, plus `COVERAGE.csv`) is archived on Zenodo. It is distributed as flat
+`.tar` parts (no outer compression — the certs are already gzipped):
+
+| Part | Contents |
+|---|---|
+| `v3_b49.tar` | all 53 B₄₉ leaves (R(B₄,B₉)=27, complete) |
+| `v3_d8.tar`, `v3_d9.tar` | R₄₇ d8/d9 families |
+| `v3_r47_rest.tar` | r47 monolithics, d6/d7/d10–d13, controls |
+| `v3_replay0–9.tar` | the origT/f0129/f0040 replay families (~37 GB) |
+| `v3_replay6_cert.tar` | the corner leaf's 2.9 GB certificate |
+| `v3_sa_certs.tar` | Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}`) |
+| `v3_docs.tar`, `COVERAGE.csv` | status/handoff docs + the leaf manifest |
+
+Unpack each part to get `r47/…`, `b49/…` or `sa_certs/…` trees of
+`<leaf>.{cnf,cube,res,log,lrat.gz}`.
+
+**Verify any leaf** (binary → text LRAT, then `lrat-check`):
+
+```sh
+zcat leaf.lrat.gz | ./sat/blrat2txt > leaf.txt
+lrat-check leaf.cnf leaf.txt        # or: scripts/verify_cert.sh leaf.cnf leaf.lrat.gz
+```
+
+`blrat2txt` decodes CaDiCaL's binary proof format (`a`/`d` records of zigzag
+varints, `map(u): even → u/2, odd → −((u−1)/2)`). lrat-check needs the text form.
+
+Verification already run (`docs/verify_report.txt`):
+
+* the hardest leaf of the campaign — the all-degree-10 corner of leaf
+  `origT_0129` in R(B₄,B₇), a 6.7 GB proof — **VERIFIED**
+  (40,966,628 clauses checked),
+* a random 40-certificate sample across every family: **40/40 VERIFIED**,
+* every one of the 813 leaves additionally carries a solver UNSAT verdict and a
+  sha256 in `docs/COVERAGE.csv`.
+
+## Repository map
+
+```
+README.md            this file
+LICENSE              MIT
+CITATION.cff
+paper/               R_B4_B7.tex/.pdf, R_B4_B9.tex/.pdf, Schur_AhmedSchaal.tex/.pdf (amsart)
+lean/
+  b49/               R(B₄,B₉)=27: Statement, RowCNF, RowBridge, Peeling,
+                     B49Witness (srg(26,10,3,4) lower bound), Step_d09_*, R49Final
+  r47/               R(B₄,B₇)=22: Statement, Peeling, Step_routeA_d9, Step_d10
+                     (312 embedded coverage cubes), Step_d10_Coverage, R47Final
+  schur/             SchurStatement, SymCNF/SymValid/SymSound (symbolic encoding),
+                     Construction (lower bounds), SchurFinal, Axioms
+sat/                 gen_bookrow.c (CNF encoder), gen_deg*.py (degree cubes),
+                     refine_splits.py, assemble_certs.py, run_case.sh,
+                     batch_verify.sh, blrat2txt.c (binary→text LRAT)
+scripts/verify_cert.sh
+docs/                CERT_STATUS.md, HANDOFF.md (archive layout),
+                     COVERAGE.csv (813 leaves), verify_report.txt
+```
 
 ## Status and caveats
 
-Computer-assisted results, not externally peer-reviewed. The certificate
-payloads are large (≈44 GB total) and are distributed out-of-band (archive
-links in `docs/HANDOFF.md`); this repository carries the papers, the Lean
-formalizations, the generators, the converters, and the full coverage
-manifest `docs/COVERAGE.csv` (813 leaves, verdict + sha256 per leaf).
+* **Computer-assisted.** The upper bounds have no human-readable proof; they rest
+  on 813 UNSAT leaves, with certificates up to ~6.7 GB of LRAT.
+* **`native_decide`.** The Lean development trusts the Lean compiler/runtime for
+  the closed Boolean evaluations listed above.
+* **Not externally peer-reviewed.** Scrutiny is welcome, especially of the CNF
+  encodings (`sat/gen_bookrow.c`), the coverage-tree completeness argument
+  (`docs/CERT_STATUS.md`), and the symbolic Schur encoding
+  (`lean/schur/SymSound.lean`).
+* **Certificate provenance.** The released certificates were produced by a
+  clean-room re-encoding of the campaign's cube partitions, validated against
+  known small Ramsey values; SAT controls (e.g. `R(B₄,B₇)>16` satisfiable) are
+  included in the archive.
 
-## Verifying a certificate
+## Citation
 
-Every `.lrat.gz` payload is **binary** LRAT (CaDiCaL `--lrat`, `--binary=true`
-default). drat-trim's `lrat-check` reads text LRAT, so verification goes
-through the bundled converter `sat/blrat2txt.c`:
-
-```bash
-git clone https://github.com/arminbiere/drat-trim && (cd drat-trim && make -j)
-./scripts/verify_cert.sh leaf.cnf leaf.lrat.gz
-# which does: zcat leaf.lrat.gz | ./sat/blrat2txt > fifo && lrat-check leaf.cnf fifo
+```bibtex
+@misc{yong2026bookramseyschur,
+  author       = {Jerry Yong},
+  title        = {Computer-assisted proofs: $R(B_4,B_7)=22$, $R(B_4,B_9)=27$,
+                  and Ahmed--Schaal Conjecture 2},
+  year         = {2026},
+  howpublished = {\url{https://github.com/jerryj6/book-ramsey-schur}},
+  note         = {Computer-assisted; Lean 4 formalizations; SAT certificates on Zenodo}
+}
 ```
 
-The converter decodes CaDiCaL's binary proof format:
-`a <id> <lits>… 0 <hints>… 0` / `d <id> <lits>… 0` records, each field a
-zigzag varint with `map(u): even → u/2, odd → −((u−1)/2)`, and emits text LRAT
-(`id d 0` for deletions).
-
-Verification already run (see `docs/verify_report.txt` and
-`docs/CERT_STATUS.md`):
-
-* the hardest leaf of the campaign — the all-degree-10 corner of leaf
-  `origT_0129` in the R(B₄,B₇) certificate, a 6.7 GB proof — **VERIFIED**
-  (40,966,628 clauses, ~5 min of lrat-check),
-* a random 40-certificate sample across every family: **40/40 VERIFIED**,
-* every leaf additionally carries a solver UNSAT verdict and sha256 manifest.
-
-## Layout
-
-    paper/   the three result papers (PDF)
-    lean/    Lean 4 formalizations: b49 (R(B4,B9)), r47 (R(B4,B7)), schur
-    sat/     CNF encoders, cube/descent generators, binary-LRAT converter
-    docs/    CERT_STATUS.md, HANDOFF.md, COVERAGE.csv, verify_report.txt
-    scripts/ verify_cert.sh
+See also `CITATION.cff`.
 
 ## License
 
-MIT (see LICENSE).
+Code (Lean sources, C/Python generators, scripts) is released under the MIT
+License (`LICENSE`). The papers (`paper/`) are released under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
