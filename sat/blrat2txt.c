@@ -1,6 +1,6 @@
 // binary LRAT (CaDiCaL --lrat, --binary=true) -> text LRAT for lrat-check.
 // Line forms: 'a' <id:varint-zigzag> <lit:varint-zigzag>... 0 <hint:varint>... 0
-//             'd' <id:varint-zigzag> <lit:varint-zigzag>... 0
+//             'd' <deleted-clause-id:varint-zigzag>... 0
 // All fields are zigzag-encoded varints (ids/hints positive, so 2*x).
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +16,8 @@ static unsigned long long rdvar(FILE *f) {
 }
 static long zz(unsigned long long u) { return (u & 1) ? -(long)((u - 1) >> 1) : (long)(u >> 1); }
 
+static long last_add = 0;   /* id of the most recent 'a' record (for 'd' line index) */
+
 int main(int argc, char **argv) {
     FILE *in = argc > 1 ? fopen(argv[1], "rb") : stdin;
     FILE *out = argc > 2 ? fopen(argv[2], "w") : stdout;
@@ -27,12 +29,16 @@ int main(int argc, char **argv) {
             continue;
         }
         if (c != 'a' && c != 'd') { fprintf(stderr, "bad marker 0x%02x\n", c); return 2; }
-        long id = zz(rdvar(in));
         if (c == 'd') {
-            // binary 'd' record: id + lits + 0  ->  text: "id d 0"
-            for (;;) { long l = zz(rdvar(in)); if (!l) break; }
-            fprintf(out, "%ld d 0\n", id);
+            /* binary 'd' record: 'd' <deleted-id>... 0. Text LRAT form:
+               "<index> d <ids>... 0" — the leading index is ignored by
+               lrat-check for deletions; CaDiCaL prints latest_id there. */
+            fprintf(out, "%ld d", last_add);
+            for (;;) { long l = zz(rdvar(in)); if (!l) break; fprintf(out, " %ld", l); }
+            fprintf(out, " 0\n");
         } else {
+            long id = zz(rdvar(in));
+            last_add = id;
             fprintf(out, "%ld", id);
             for (;;) { long l = zz(rdvar(in)); if (!l) break; fprintf(out, " %ld", l); }
             fprintf(out, " 0");
