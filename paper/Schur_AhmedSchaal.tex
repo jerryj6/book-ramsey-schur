@@ -201,6 +201,7 @@ off-diagonal colour classes.
 \centering
 \caption{Certified symbolic formulas (CaDiCaL~2, direct LRAT, then
 \texttt{lrattrim}).}
+\label{tab:sym}
 \begin{tabular}{lrrrrrrl}
 \toprule
 $(s,t)$ & $M$ & $B$ & $J$ & $u_0$ & vars & clauses & solve (s)\ \ trimmed LRAT \\
@@ -278,11 +279,17 @@ also regenerated from the written design by a second implementation,
 in Python, without reading the original generator. It was again
 unsatisfiable.
 
-\paragraph{Released artifacts.} All $98$ released certificates — the
-$94$ finite cases and the four symbolic instances — pass
-\texttt{lrat-check} from drat-trim, with SHA-256 hashes per CNF and
-proof recorded in \texttt{sat/schur/LRAT\_MANIFEST.csv} and
-\texttt{sat/schur/SYMMETRIC\_MANIFEST.csv} respectively. The Lean
+\paragraph{Released artifacts.} The released certificates pass
+\texttt{lrat-check} from drat-trim: the $94$ finite cases
+(\texttt{sat/schur/LRAT\_MANIFEST.csv}) and all $23$ archived
+symbolic proofs (\texttt{sat/schur/SYMMETRIC\_MANIFEST.csv}), with
+SHA-256 hashes per CNF and proof. The theorem chain uses the
+parameter rows of Table~\ref{tab:sym} — $(4,4)$ with $B=20,J=2$
+covering $u\ge21$, and $B=30$ with $J=1,2,3$ for $(4,5)$, $(4,6)$,
+$(5,5)$ covering $u\ge31$; the finite manifest reaches $u\le20$ for
+$(4,4)$ and $u\le30$ for the rest, so the chains meet with no gap.
+The remaining $19$ symbolic rows are alternative parameter settings
+of the same families, also verified. The Lean
 source tree in the release is a partial reconstruction of the original
 project: the modules it is missing, and the checker-verification that
 stands in for them, are itemised in \texttt{docs/LEAN\_STATUS.md}.

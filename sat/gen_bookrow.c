@@ -63,10 +63,18 @@ static void atmost(int *xs, int len, int K){
 }
 
 int main(int argc, char **argv){
-    if (argc < 7){ fprintf(stderr,"usage: %s N m n d lo hi [cubefile]\n",argv[0]); return 2; }
+    if (argc < 7){ fprintf(stderr,"usage: %s N m n d lo hi [cubefile|nolex] [cubefile|nolex]\n"
+        "  'nolex' skips the block-lex symmetry-breaking clauses, reproducing\n"
+        "  the exact clause sequence of the archived campaign CNFs (which\n"
+        "  predate that block). Default output appends the lex clauses.\n",argv[0]); return 2; }
     N=atoi(argv[1]); M=atoi(argv[2]); Nb=atoi(argv[3]);
     D=atoi(argv[4]); LO=atoi(argv[5]); HI=atoi(argv[6]);
-    const char *cubefile = argc>7 ? argv[7] : NULL;
+    const char *cubefile = NULL;
+    int nolex = 0;
+    for (int i=7;i<argc;i++){
+        if (!strcmp(argv[i],"nolex")) nolex = 1;
+        else cubefile = argv[i];
+    }
     edge_max = N*(N-1)/2;
     aux_next = edge_max + 1;
 
@@ -188,7 +196,9 @@ int main(int argc, char **argv){
        block (i in 1..N-2, i != D when D>=0): enforce row_i >=lex row_{i+1}
        where each row is the red-edge profile over V\{i,i+1} in natural order.
        leader: [a -b] (t=0) or [-prev a -b]; equality defines lex(i,t) <->
-       prev && (a<->b). Matches the shipped spec clause-for-clause. */
+       prev && (a<->b). Matches the shipped spec clause-for-clause.
+       Skipped entirely under 'nolex' (archived CNFs predate this block). */
+    if (!nolex)
     {
         for (int i=1;i<N-1;i++){
             if (D>=0 && i==D) continue;

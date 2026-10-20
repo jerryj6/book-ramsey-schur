@@ -29,7 +29,10 @@ release); they do not make the tree build.
 - Independent check tables: `docs/B49_independent_check.csv` (27/27 PASS,
   lrat-check on monolithic B49 leaves), `sat/schur/LRAT_MANIFEST.csv`
   (94/94 PASS, Schur finite certificates), `sat/schur/SYMMETRIC_MANIFEST.csv`
-  (4/4 PASS, symbolic certificates supporting the infinite families),
+  (all 23 archived symbolic payloads audited: 16 proofs PASS — covering the
+  complete theorem chain (4,4) B20J2 / (4,5) B30J1 / (4,6) B30J2 / (5,5) B30J3;
+  5 parameter-sweep rows are 0-byte placeholders whose formulas are SAT;
+  the two (5,5) J1/J2 payloads end before the empty clause — marked FAIL),
   `docs/verify_report.txt` (40/40 PASS
   sample across all families plus the 6.7 GB corner certificate).
 - `#print axioms` output: `docs/R47_AXIOMS.txt`, `docs/SCHUR_AXIOMS.txt`,
