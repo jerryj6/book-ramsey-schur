@@ -167,7 +167,14 @@ lrat-check leaf.cnf leaf.txt        # or: scripts/verify_cert.sh leaf.cnf leaf.l
 `blrat2txt` decodes CaDiCaL's binary proof format (`a`/`d` records of zigzag
 varints, `map(u): even → u/2, odd → −((u−1)/2)`). lrat-check needs the text form.
 
-Verification already run (`docs/verify_report.txt`):
+Complete external recheck (`docs/FULL_VERIFICATION.csv`, 2026-10-20): all 902
+archived leaf certificates were run through `lrat-check` — 895 payloads PASS.
+The 7 rejected payloads (all `r47_d10_replay`; hints stop unit-propagating
+mid-proof) had their formulas re-solved fresh with CaDiCaL and the replacement
+proofs verify; every leaf formula therefore carries an externally verified
+UNSAT proof.
+
+Earlier spot checks (`docs/verify_report.txt`):
 
 * the hardest leaf of the campaign — the all-degree-10 corner of leaf
   `origT_0129` in R(B₄,B₇), a 6.7 GB proof — **VERIFIED**

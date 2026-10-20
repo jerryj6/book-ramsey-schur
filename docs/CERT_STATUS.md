@@ -58,9 +58,18 @@ across families plus the corner leaf (see counts below).
 
 ### Verification results (post-conversion)
 
-What "verified" means here: the solver produced an UNSAT verdict for each leaf;
-`lrat-check` independently re-proved a **subset** of the certificates. It is not a
-full recheck of all 812.
+**Complete recheck (2026-10-20):** every archived leaf certificate was run through
+`lrat-check` — **895/902 payloads PASS** (`docs/FULL_VERIFICATION.csv`, one row
+per leaf with per-proof sha256). The 7 rejected payloads are all in
+`r47_d10_replay` and share one failure mode: hint records that stop unit
+propagating mid-proof (e.g. `FAILED: multiple literals unassigned in hint`).
+Each of those 7 **formulas** was re-solved fresh with CaDiCaL 3.0.1 and every
+one returned UNSAT again; the replacement proofs pass `lrat-check` and are
+published alongside the originals on the Zenodo record
+(`<leaf>.repaired.lrat.gz`). Effective state: all 902 formulas carry an
+externally verified UNSAT proof.
+
+Earlier spot checks, for the record:
 
 - Corner leaf x18_10 cert: **lrat-check VERIFIED** (40,966,628 clauses, 297s).
 - Random sample of 40 certs across all families: **40/40 VERIFIED** (`verify_report.txt`).
