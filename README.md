@@ -5,7 +5,9 @@ This repository contains computer-assisted proofs of three results, each shipped
 * a paper describing the argument (`paper/`, LaTeX sources included),
 * an end-to-end Lean 4 formalization (`lean/`),
 * the SAT encoders, cube generators and checkers used for the computational leaves
-  (`sat/`), with the certificates (CNF / LRAT, ≈ 44 GB) archived on Zenodo
+  (`sat/`), with the certificates (CNF / LRAT, ≈ 50 GB) archived on Zenodo:
+  [10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386) and
+  [10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200)
   (see [Certificates](#certificates)),
 * a complete per-leaf coverage manifest and verification record (`docs/`).
 
@@ -104,21 +106,33 @@ a wrong certificate makes `lrat-check` fail.
 
 ## Certificates
 
-The ≈ 44 GB certificate archive (CNF + gzipped binary LRAT + solver log per
-leaf, plus `COVERAGE.csv`) is archived on Zenodo. It is distributed as flat
-`.tar` parts (no outer compression — the certs are already gzipped):
+The ≈ 50 GB certificate archive (CNF + gzipped binary LRAT + solver log per
+leaf, plus `COVERAGE.csv`) is archived on Zenodo across two records — Zenodo
+caps each record at 50 GB:
 
-| Part | Contents |
+* **[10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386)** — main
+  record: all Ramsey certificates (88 files).
+* **[10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200)** — the
+  Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}`).
+
+Each logical archive is split into 600 MB `partNNpart` pieces on the record.
+Reassemble and unpack with:
+
+```sh
+cat v3_b49.tar.part* > v3_b49.tar && tar -xf v3_b49.tar
+```
+
+| Archive | Contents |
 |---|---|
 | `v3_b49.tar` | all 53 B₄₉ leaves (R(B₄,B₉)=27, complete) |
 | `v3_d8.tar`, `v3_d9.tar` | R₄₇ d8/d9 families |
 | `v3_r47_rest.tar` | r47 monolithics, d6/d7/d10–d13, controls |
 | `v3_replay0–9.tar` | the origT/f0129/f0040 replay families (~37 GB) |
-| `v3_replay6_cert.tar` | the corner leaf's 2.9 GB certificate |
-| `v3_sa_certs.tar` | Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}`) |
+| `v3_corner.lrat.gz` | the corner leaf's 2.9 GB certificate (the 6.7 GB proof, gzipped) |
+| `v3_sa_certs.tar` | Ahmed–Schaal certificates — on the part-2 record |
 | `v3_docs.tar`, `COVERAGE.csv` | status/handoff docs + the leaf manifest |
 
-Unpack each part to get `r47/…`, `b49/…` or `sa_certs/…` trees of
+Unpack each archive to get `r47/…`, `b49/…` or `sa_certs/…` trees of
 `<leaf>.{cnf,cube,res,log,lrat.gz}`.
 
 **Verify any leaf** (binary → text LRAT, then `lrat-check`):
@@ -186,7 +200,9 @@ docs/                CERT_STATUS.md, HANDOFF.md (archive layout),
                   and Ahmed--Schaal Conjecture 2},
   year         = {2026},
   howpublished = {\url{https://github.com/jerryj6/book-ramsey-schur}},
-  note         = {Computer-assisted; Lean 4 formalizations; SAT certificates on Zenodo}
+  note         = {Computer-assisted; Lean 4 formalizations; SAT certificates:
+                  \url{https://doi.org/10.5281/zenodo.23510386},
+                  \url{https://doi.org/10.5281/zenodo.23513200}}
 }
 ```
 
