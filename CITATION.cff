@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "R(B4,B7)=22, R(B4,B9)=27 and the Ahmed–Schaal Conjecture 2 — papers, Lean 4 formalizations, SAT certificates"
+type: software
+authors:
+  - family-names: Yong
+    given-names: Jerry
+    email: jerryjyong@gmail.com
+version: "1.0"
+date-released: 2026-10-20
+license: Apache-2.0
+keywords:
+  - Ramsey numbers
+  - book Ramsey numbers
+  - Schur numbers
+  - computer-assisted proof
+  - SAT
+  - LRAT
+  - Lean 4
+abstract: >-
+  Computer-assisted proofs of R(B4,B7)=22 and R(B4,B9)=27 via
+  degree-stratified cube partitions with independently verifiable binary-LRAT
+  certificates, and of four families of the Ahmed–Schaal Conjecture 2 via a
+  symbolic SAT encoding. Includes papers, Lean 4 formalizations, encoders,
+  and verification tooling.
