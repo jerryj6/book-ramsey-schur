@@ -70,14 +70,17 @@ int main(int argc, char **argv){
     edge_max = N*(N-1)/2;
     aux_next = edge_max + 1;
 
-    /* counter aux vars: per edge (u,v): c[w] red-common, d[w] blue-common */
-    int aux_start = aux_next;
-    int cw_base = aux_next; aux_next += edge_max * (N-2) > 0 ? N * N : 0; /* over-alloc */
-    /* simpler explicit layout: for each ordered pair u<v, w-th slot */
-    /* c_red(u,v,w) = red_base + (edge_idx)*(N) + w ; likewise blue */
+    /* Variable layout (canonical — archived CNFs/cubes/certs use it):
+         1..edge_max        edge vars E(u,v)
+         edge_max+1 ..      reserved N*N block (unused by the encoder, but part
+                            of the emitted numbering — do not remove)
+         then red_base / blu_base blocks of edge_max*N each (per-edge
+                            common-neighbour aux vars)
+         then per-edge guarded Sinz counters, degree counters, block-lex vars.
+       gen_deg_cubes.py:layout() must mirror this exactly. */
+    aux_next += N * N;
     int red_base = aux_next; aux_next += edge_max * N;
     int blu_base = aux_next; aux_next += edge_max * N;
-    (void)cw_base; (void)aux_start;
     int deg_aux_start = aux_next;      /* degree counters allocated dynamically */
     /* Worst-case aux for degree counters: N vertices * (N-2)*(N-1) */
     int total_vars = aux_next - 1 + N * (N-1) * (N-1);
@@ -90,7 +93,7 @@ int main(int argc, char **argv){
        a tmpfile, then print header + copy. */
     char tmp[] = "/tmp/genbrXXXXXX";
     int fd = mkstemp(tmp);
-    FILE *mem = fdopen(fd, "w");
+    FILE *mem = fdopen(fd, "w+");   /* reread after rewind() to copy to stdout */
     FILE *out = stdout;
     stdout = mem;   /* hack: emit* write to mem */
 

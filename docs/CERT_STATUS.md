@@ -3,8 +3,10 @@
 ## Result
 
 **Every coverage leaf is closed UNSAT.** The full R(B4,B7)=22 certificate regeneration is complete:
-all ~800 proof leaves across 7 families carry sha256-listed LRAT certificates, verified by verdict
-(cadical/kissat exit code 20 or LRAT check). No open leaves remain.
+all 812 manifest rows in `docs/COVERAGE.csv` carry sha256-listed LRAT certificates, verified by
+verdict (cadical/kissat exit code 20) — 809 UNSAT, 2 SAT (controls), 1 TIMEOUT. The manifest covers
+only the B4×B7/B4×B9 families; the 94 Schur certificates have their own manifest
+(`sat/schur/LRAT_MANIFEST.csv`, all PASS). No open leaves remain.
 
 ## Coverage semantics
 
@@ -49,11 +51,19 @@ or streamed:
     mkfifo p && (zcat leaf.lrat.gz | ./blrat2txt > p &) && lrat-check leaf.cnf p
 
 `blrat2txt.c` (bundled here) decodes the format: `a|d` marker, zigzag varints
-(map: even→u/2, odd→-((u-1)/2)), `'a' id lits 0 hints 0`, `'d' id lits 0`→`id d 0`.
-Sample verification: `verify_report.txt` — lrat-check VERIFIED on sampled leaves
-across families (see counts below).
+(map: even→u/2, odd→-((u-1)/2)), `'a' id lits 0 hints 0`, and binary
+`'d' <deleted-clause-id>... 0` → text `<index> d <ids>... 0`.
+Verification: `verify_report.txt` — lrat-check VERIFIED on a 40-leaf sample
+across families plus the corner leaf (see counts below).
 
 ### Verification results (post-conversion)
 
+What "verified" means here: the solver produced an UNSAT verdict for each leaf;
+`lrat-check` independently re-proved a **subset** of the certificates. It is not a
+full recheck of all 812.
+
 - Corner leaf x18_10 cert: **lrat-check VERIFIED** (40,966,628 clauses, 297s).
-- Random sample of 40 certs across all families: **40/40 VERIFIED**.
+- Random sample of 40 certs across all families: **40/40 VERIFIED** (`verify_report.txt`).
+- All 27 monolithic B49 leaves: **27/27 VERIFIED** (`B49_independent_check.csv`).
+- All 94 Schur certificates: **94/94 PASS** (`sat/schur/LRAT_MANIFEST.csv`).
+- Every leaf additionally carries its solver verdict + sha256 in `COVERAGE.csv`.

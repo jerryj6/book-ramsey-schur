@@ -70,7 +70,7 @@ theorem conj_4_4 : ConjFamily 4 4
    independently.
 3. **Coverage tree.** Hard leaves are split recursively by degree-pin
    (fixing one vertex's exact degree) and edge-OR descent, producing a coverage
-   tree whose 813 leaves are each individually UNSAT
+   tree whose 812 leaves are each individually UNSAT
    (`docs/COVERAGE.csv` — one row per leaf: family, verdict, LRAT bytes, sha256).
 4. **Certificates.** Every leaf carries a CaDiCaL **binary** LRAT certificate
    (`.lrat.gz`), independently checkable by `lrat-check` after conversion
@@ -79,8 +79,8 @@ theorem conj_4_4 : ConjFamily 4 4
 ### Lower bounds
 
 * `R(B₄,B₉) > 26`: the unique srg(26,10,3,4) used as the red graph — red-degrees
-  are 10 and its neighbourhood graph is triangle-free; checked by
-  `native_decide` in `lean/b49/B49Witness.lean`.
+  are 10, every red edge has exactly 3 red common neighbours, and every blue
+  edge exactly 8; checked by `native_decide` in `lean/b49/B49Witness.lean`.
 * `R(B₄,B₇) > 21`: an explicit colouring of `K₂₁`, `LowerBound 21 4 7` in
   `lean/r47/R47Final.lean`.
 
@@ -95,11 +95,14 @@ colourings are given in `lean/schur/Construction.lean`.
 ## Trust base
 
 `#print axioms` invocations are included in `R49Final.lean`, `R47Final.lean` and
-`schur/Axioms.lean`. Semantic arguments (definitions, reductions, encoding
-soundness, witness validity) are kernel-checked; `native_decide` is used only
-for closed Boolean computations (the srg witness check, the 312 embedded d10
-coverage cubes in `Step_d10.lean`, coverage checks). There is no `sorry` in the
-import closure.
+`schur/Axioms.lean`; recorded output is in `docs/R47_AXIOMS.txt`,
+`docs/SCHUR_AXIOMS.txt`, and `docs/B49_lean_final.log`. Semantic arguments
+(definitions, reductions, encoding soundness, witness validity) are
+kernel-checked; `native_decide` is used for closed Boolean computations — the
+srg witness check, the 312 embedded d10 coverage cubes in `Step_d10.lean`,
+coverage checks, **and the `LRAT.check` certificate verifications inside the
+Step_* modules** — so the trust base includes the Lean compiler/runtime for
+those native evaluations. There is no `sorry` in the import closure.
 
 The SAT solvers are not trusted: each leaf's claim is its LRAT certificate, and
 a wrong certificate makes `lrat-check` fail.
@@ -151,8 +154,10 @@ Verification already run (`docs/verify_report.txt`):
   `origT_0129` in R(B₄,B₇), a 6.7 GB proof — **VERIFIED**
   (40,966,628 clauses checked),
 * a random 40-certificate sample across every family: **40/40 VERIFIED**,
-* every one of the 813 leaves additionally carries a solver UNSAT verdict and a
-  sha256 in `docs/COVERAGE.csv`.
+* every one of the 812 leaves additionally carries a solver verdict (809 UNSAT,
+  2 SAT, 1 TIMEOUT) and a sha256 in `docs/COVERAGE.csv`; all 27 monolithic B49
+  leaves were additionally `lrat-check`ed (`docs/B49_independent_check.csv`),
+  as were all 94 Schur certificates (`sat/schur/LRAT_MANIFEST.csv`).
 
 ## Repository map
 
@@ -162,6 +167,9 @@ LICENSE              MIT
 CITATION.cff
 paper/               R_B4_B7.tex/.pdf, R_B4_B9.tex/.pdf, Schur_AhmedSchaal.tex/.pdf (amsart)
 lean/
+  lean-toolchain     leanprover/lean4:v4.35.0; lakefile.lean is a rebuild
+                     scaffold — the tree is a partial snapshot, see
+                     docs/LEAN_STATUS.md for the missing modules
   b49/               R(B₄,B₉)=27: Statement, RowCNF, RowBridge, Peeling,
                      B49Witness (srg(26,10,3,4) lower bound), Step_d09_*, R49Final
   r47/               R(B₄,B₇)=22: Statement, Peeling, Step_routeA_d9, Step_d10
@@ -171,21 +179,36 @@ lean/
 sat/                 gen_bookrow.c (CNF encoder), gen_deg*.py (degree cubes),
                      refine_splits.py, assemble_certs.py, run_case.sh,
                      batch_verify.sh, blrat2txt.c (binary→text LRAT)
+sat/schur/           Schur-side generators/checkers (gen_schur.c, gen_sym.c,
+                     check_schur.c, gen_sym2.py), SYMBOLIC_DESIGN.md,
+                     LRAT_MANIFEST.csv (94 PASS)
 scripts/verify_cert.sh
-docs/                CERT_STATUS.md, HANDOFF.md (archive layout),
-                     COVERAGE.csv (813 leaves), verify_report.txt
+docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout),
+                     COVERAGE.csv (812 leaves, B4×B7/B4×B9 families only),
+                     verify_report.txt, B49_independent_check.csv,
+                     R47_AXIOMS.txt, SCHUR_AXIOMS.txt, B49_lean_final.log,
+                     R47_REGEN_STATUS.md, R47_*_manifest.json
 ```
 
 ## Status and caveats
 
 * **Computer-assisted.** The upper bounds have no human-readable proof; they rest
-  on 813 UNSAT leaves, with certificates up to ~6.7 GB of LRAT.
+  on 812 leaves, with certificates up to ~6.7 GB of LRAT.
 * **`native_decide`.** The Lean development trusts the Lean compiler/runtime for
-  the closed Boolean evaluations listed above.
+  the closed Boolean evaluations listed above, including the `LRAT.check` runs
+  inside the certificate modules.
 * **Not externally peer-reviewed.** Scrutiny is welcome, especially of the CNF
   encodings (`sat/gen_bookrow.c`), the coverage-tree completeness argument
   (`docs/CERT_STATUS.md`), and the symbolic Schur encoding
   (`lean/schur/SymSound.lean`).
+* **Partial Lean snapshot.** The released `lean/` tree does not build: several
+  modules (encoding layer, most Step_* certificate modules, Schur cert
+  modules) were lost with the build VM — `docs/LEAN_STATUS.md` lists them and
+  explains what can be reconstructed from the certificate archive. The final
+  theorems currently stand on the external `lrat-check` verification.
+* **Certificate archive pending.** The ≈44 GB archive is staged for Zenodo
+  (upload in progress at release time); until the DOI resolves, the
+  certificates live in the campaign storage described in `docs/HANDOFF.md`.
 * **Certificate provenance.** The released certificates were produced by a
   clean-room re-encoding of the campaign's cube partitions, validated against
   known small Ramsey values; SAT controls (e.g. `R(B₄,B₇)>16` satisfiable) are

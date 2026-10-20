@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # gen_deg_cubes.py — emit degree-count cube files for gen_bookrow layout.
-# Layout recomputation (must mirror gen_bookrow.c):
+# Layout recomputation (must mirror gen_bookrow.c exactly — archived
+# CNFs/cubes/certs all use the C layout, including the reserved N*N block):
 #   edges 1..edge_max
-#   red_base = edge_max+1          (size edge_max*N)
+#   reserved block of N*N vars (emitted by gen_bookrow.c, unused)
+#   red_base = edge_max+1+N*N      (size edge_max*N)
 #   blu_base = red_base+edge_max*N (size edge_max*N)
 #   per-edge guarded Sinz (u<v in order): red (len-1)*(M-1) then blue (len-1)*(Nb-1)
 #   degree bounds: per vertex v: hi-branch (len=N-1 regs... len-1 rows? see below)
@@ -15,6 +17,7 @@ import sys, itertools, os
 def layout(N, m, n, d, lo, hi):
     em = N*(N-1)//2
     aux = em + 1
+    aux += N*N  # reserved block, mirroring gen_bookrow.c (part of the canonical layout)
     red_base = aux; aux += em*N
     blu_base = aux; aux += em*N
     # per-edge counters
