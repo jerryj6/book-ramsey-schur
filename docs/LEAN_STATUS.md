@@ -28,7 +28,9 @@ release); they do not make the tree build.
   `sat/batch_verify.sh` + `sat/blrat2txt` are the check path.
 - Independent check tables: `docs/B49_independent_check.csv` (27/27 PASS,
   lrat-check on monolithic B49 leaves), `sat/schur/LRAT_MANIFEST.csv`
-  (94/94 PASS, Schur certificates), `docs/verify_report.txt` (40/40 PASS
+  (94/94 PASS, Schur finite certificates), `sat/schur/SYMMETRIC_MANIFEST.csv`
+  (4/4 PASS, symbolic certificates supporting the infinite families),
+  `docs/verify_report.txt` (40/40 PASS
   sample across all families plus the 6.7 GB corner certificate).
 - `#print axioms` output: `docs/R47_AXIOMS.txt`, `docs/SCHUR_AXIOMS.txt`,
   `docs/B49_lean_final.log` (last build log) — the theorems' trust base is

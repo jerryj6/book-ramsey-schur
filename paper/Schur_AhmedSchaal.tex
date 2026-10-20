@@ -278,6 +278,18 @@ also regenerated from the written design by a second implementation,
 in Python, without reading the original generator. It was again
 unsatisfiable.
 
+\paragraph{Released artifacts.} All $98$ released certificates — the
+$94$ finite cases and the four symbolic instances — pass
+\texttt{lrat-check} from drat-trim, with SHA-256 hashes per CNF and
+proof recorded in \texttt{sat/schur/LRAT\_MANIFEST.csv} and
+\texttt{sat/schur/SYMMETRIC\_MANIFEST.csv} respectively. The Lean
+source tree in the release is a partial reconstruction of the original
+project: the modules it is missing, and the checker-verification that
+stands in for them, are itemised in \texttt{docs/LEAN\_STATUS.md}.
+Checking an LRAT proof establishes that its CNF is unsatisfiable;
+soundness of the encodings is argued in Section~3 and, in the
+released snapshot, is not re-certified by a complete Lean build.
+
 \section{Limitations and outlook}
 
 For $(5,6)$ and $(6,6)$, the $c$-padding relaxation remained

@@ -285,6 +285,18 @@ All $27$ trimmed certificates were also checked with
 DIMACS files. This checker shares no code with CaDiCaL or Lean, and it
 accepted all $27$.
 
+\paragraph{Released artifacts.} The claims above describe the original
+verification campaign. The certificate archive released with this
+paper was regenerated subsequently after a storage loss of the
+original build tree; all $27$ \texttt{b49} monolithic certificates in
+the archive again pass \texttt{lrat-check} against the released DIMACS
+files, with per-file SHA-256 hashes recorded in
+\texttt{docs/COVERAGE.csv} and the companion manifests. The Lean
+source tree in the release is a partial reconstruction of the original
+project — the modules it is missing, and the checker-verification
+that stands in for them, are itemised in
+\texttt{docs/LEAN\_STATUS.md}.
+
 \section{Controls against encoding errors}
 
 The instances are much easier than the neighbouring open case

@@ -7,7 +7,7 @@ This repository contains computer-assisted proofs of three results, each shipped
 * the SAT encoders, cube generators and checkers used for the computational leaves
   (`sat/`), with the certificates (CNF / LRAT, ≈ 50 GB) archived on Zenodo:
   [10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386) and
-  [10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200)
+  [10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483)
   (see [Certificates](#certificates)),
 * a complete per-leaf coverage manifest and verification record (`docs/`).
 
@@ -115,8 +115,10 @@ caps each record at 50 GB:
 
 * **[10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386)** — main
   record: all Ramsey certificates (88 files).
-* **[10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200)** — the
-  Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}`).
+* **[10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483)** — the
+  Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}` tar parts), plus the
+  four symbolic-family CNFs (`sym_*_B30_J3.cnf.gz`) and
+  `SYMMETRIC_MANIFEST.csv` as loose files (v2).
 
 Each logical archive is split into 600 MB `partNNpart` pieces on the record.
 Reassemble and unpack with:
@@ -133,6 +135,7 @@ cat v3_b49.tar.part* > v3_b49.tar && tar -xf v3_b49.tar
 | `v3_replay0–9.tar` | the origT/f0129/f0040 replay families (~37 GB) |
 | `v3_corner.lrat.gz` | the corner leaf's 2.9 GB certificate (the 6.7 GB proof, gzipped) |
 | `v3_sa_certs.tar` | Ahmed–Schaal certificates — on the part-2 record |
+| `sym_*_B30_J3.cnf.gz` | the four symbolic-family CNFs (one per proved pair) — on the part-2 record |
 | `v3_docs.tar`, `COVERAGE.csv` | status/handoff docs + the leaf manifest |
 
 Unpack each archive to get `r47/…`, `b49/…` or `sa_certs/…` trees of
@@ -157,7 +160,12 @@ Verification already run (`docs/verify_report.txt`):
 * every one of the 812 leaves additionally carries a solver verdict (809 UNSAT,
   2 SAT, 1 TIMEOUT) and a sha256 in `docs/COVERAGE.csv`; all 27 monolithic B49
   leaves were additionally `lrat-check`ed (`docs/B49_independent_check.csv`),
-  as were all 94 Schur certificates (`sat/schur/LRAT_MANIFEST.csv`).
+  as were all 98 Schur certificates — the 94 finite cases
+  (`sat/schur/LRAT_MANIFEST.csv`) and the four symbolic instances supporting
+  the infinite families (`sat/schur/SYMMETRIC_MANIFEST.csv`). Every file in
+  both Zenodo records is fingerprinted in `docs/FILE_HASHES.csv`
+  (path, sha256, size), so checker results can be tied to exact
+  CNF/proof hashes.
 
 ## Repository map
 
@@ -181,10 +189,12 @@ sat/                 gen_bookrow.c (CNF encoder), gen_deg*.py (degree cubes),
                      batch_verify.sh, blrat2txt.c (binary→text LRAT)
 sat/schur/           Schur-side generators/checkers (gen_schur.c, gen_sym.c,
                      check_schur.c, gen_sym2.py), SYMBOLIC_DESIGN.md,
-                     LRAT_MANIFEST.csv (94 PASS)
+                     LRAT_MANIFEST.csv (94 finite, PASS),
+                     SYMMETRIC_MANIFEST.csv (4 symbolic, PASS)
 scripts/verify_cert.sh
 docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout),
                      COVERAGE.csv (812 leaves, B4×B7/B4×B9 families only),
+                     FILE_HASHES.csv (sha256 of every archived file),
                      verify_report.txt, B49_independent_check.csv,
                      R47_AXIOMS.txt, SCHUR_AXIOMS.txt, B49_lean_final.log,
                      R47_REGEN_STATUS.md, R47_*_manifest.json
@@ -208,7 +218,7 @@ docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout)
   theorems currently stand on the external `lrat-check` verification.
 * **Certificate archive.** The ≈50 GB archive is published on Zenodo
   ([10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386),
-  [10.5281/zenodo.23513200](https://doi.org/10.5281/zenodo.23513200));
+  [10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483));
   `docs/HANDOFF.md` describes the layout.
 * **Certificate provenance.** The released certificates were produced by a
   clean-room re-encoding of the campaign's cube partitions, validated against
@@ -226,7 +236,7 @@ docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout)
   howpublished = {\url{https://github.com/jerryj6/book-ramsey-schur}},
   note         = {Computer-assisted; Lean 4 formalizations; SAT certificates:
                   \url{https://doi.org/10.5281/zenodo.23510386},
-                  \url{https://doi.org/10.5281/zenodo.23513200}}
+                  \url{https://doi.org/10.5281/zenodo.23515483}}
 }
 ```
 

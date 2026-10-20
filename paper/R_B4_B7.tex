@@ -175,6 +175,26 @@ disk. Those $144$ cubes were re-solved from the same Lean-generated
 CNFs. The new proofs again passed the independent checker and Lean.
 The manifest records both the original and the regenerated hashes.
 
+\paragraph{Released artifacts.} The claims above describe the original
+verification campaign. The certificate archive released with this
+paper was regenerated subsequently after a storage loss of the
+original build tree, and its leaf decomposition differs in detail from
+the run described here. The released set comprises $812$ leaves across
+the \texttt{r47} and \texttt{b49} families, each with its DIMACS CNF,
+binary LRAT proof, solver verdict and SHA-256 hash recorded in
+\texttt{docs/COVERAGE.csv} and the companion file-hash manifest. Its
+external verification is itemised in the repository: the corner leaf
+($40{,}966{,}628$ clauses), a $40$-certificate stratified sample and
+all $27$ monolithic \texttt{b49} leaves pass \texttt{lrat-check}
+($40/40$, $27/27$); every leaf additionally carries a solver verdict.
+The Lean source tree in the release is a partial reconstruction of the
+original project — the modules it is missing, and the
+checker-verification that stands in for them, are itemised in
+\texttt{docs/LEAN\_STATUS.md}. Checking an archived LRAT proof
+establishes that its particular CNF is unsatisfiable; encoding
+soundness and exhaustive case coverage are argued in the text and, in
+the released snapshot, are not re-certified by a complete Lean build.
+
 \section{Negative results}
 
 The following attempts did not succeed:
