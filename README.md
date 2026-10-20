@@ -9,7 +9,7 @@ This repository contains computer-assisted proofs of three results, each shipped
 * the SAT encoders, cube generators and checkers used for the computational leaves
   (`sat/`), with the certificates (CNF / LRAT, ≈ 50 GB) archived on Zenodo:
   [10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386) and
-  [10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483)
+  [10.5281/zenodo.23516415](https://doi.org/10.5281/zenodo.23516415)
   (see [Certificates](#certificates)),
 * a complete per-leaf coverage manifest and verification record (`docs/`).
 
@@ -125,7 +125,7 @@ caps each record at 50 GB:
 
 * **[10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386)** — main
   record: all Ramsey certificates (88 files).
-* **[10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483)** — the
+* **[10.5281/zenodo.23516415](https://doi.org/10.5281/zenodo.23516415)** — the
   Ahmed–Schaal certificates (`sa_certs/{cnf,lrat,log}` tar parts), plus the
   seven symbolic-family CNFs for the theorem chain (`sym_4_4_B20_J2`,
   `sym_4_5_B30_J1`, `sym_4_6_B30_J2`, `sym_*_B30_J3`) and
@@ -235,7 +235,7 @@ docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout)
   theorems currently stand on the external `lrat-check` verification.
 * **Certificate archive.** The ≈50 GB archive is published on Zenodo
   ([10.5281/zenodo.23510386](https://doi.org/10.5281/zenodo.23510386),
-  [10.5281/zenodo.23515483](https://doi.org/10.5281/zenodo.23515483));
+  [10.5281/zenodo.23516415](https://doi.org/10.5281/zenodo.23516415));
   `docs/HANDOFF.md` describes the layout.
 * **Certificate provenance.** The released certificates were produced by a
   clean-room re-encoding of the campaign's cube partitions, validated against
@@ -253,7 +253,7 @@ docs/                CERT_STATUS.md, LEAN_STATUS.md, HANDOFF.md (archive layout)
   howpublished = {\url{https://github.com/jerryj6/book-ramsey-schur}},
   note         = {Computer-assisted; Lean 4 formalizations; SAT certificates:
                   \url{https://doi.org/10.5281/zenodo.23510386},
-                  \url{https://doi.org/10.5281/zenodo.23515483}}
+                  \url{https://doi.org/10.5281/zenodo.23516415}}
 }
 ```
 

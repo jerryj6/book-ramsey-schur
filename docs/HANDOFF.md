@@ -4,7 +4,7 @@ State: ALL coverage leaves closed UNSAT (frontier exhausted; `open=0`).
 
 The ~50 GB certificate archive lives on Zenodo:
 `10.5281/zenodo.23510386` (main: all Ramsey certs, 88 files) and
-`10.5281/zenodo.23515483` (part 2: Ahmed–Schaal certs). Each archive is split
+`10.5281/zenodo.23516415` (part 2: Ahmed–Schaal certs). Each archive is split
 into 600 MB `partNNpart` pieces — `cat name.tar.part* > name.tar && tar -xf name.tar`.
 
 This bundle's `cert_pack/` tree mirrors `runs/` layout. Each leaf directory contains:
